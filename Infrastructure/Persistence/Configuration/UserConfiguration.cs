@@ -20,6 +20,10 @@ public class UserConfiguration : BaseEntityConfiguration<User>
             .HasMaxLength(255)
             .IsRequired();
 
+        builder.Property(x => x.PasswordHash)
+            .HasMaxLength(500)
+            .IsRequired();
+
         builder.Property(x => x.FirstName)
             .HasMaxLength(255)
             .IsRequired();

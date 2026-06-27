@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using TaLentShowcase.API.Models;
 
 namespace TaLentShowcase.API.Middleware;
 
@@ -34,6 +35,9 @@ public class GlobalExceptionMiddleware
         {
             KeyNotFoundException => HttpStatusCode.NotFound,
             ArgumentException => HttpStatusCode.BadRequest,
+            InvalidCredentialsException => HttpStatusCode.Unauthorized,
+            ForbiddenException => HttpStatusCode.Forbidden,
+            ConflictException => HttpStatusCode.Conflict,
             _ => HttpStatusCode.InternalServerError
         };
 
@@ -42,27 +46,12 @@ public class GlobalExceptionMiddleware
             _logger.LogError(exception, "Unhandled exception occurred.");
         }
 
-        var problemDetails = new ProblemDetails
-        {
-            Status = (int)statusCode,
-            Title = GetTitle(statusCode),
-            Detail = exception.Message,
-            Instance = context.Request.Path
-        };
+        var message = statusCode == HttpStatusCode.InternalServerError
+            ? "An unexpected error occurred."
+            : exception.Message;
 
-        context.Response.ContentType = "application/problem+json";
-        context.Response.StatusCode = problemDetails.Status.Value;
-
-        await context.Response.WriteAsJsonAsync(problemDetails);
-    }
-
-    private static string GetTitle(HttpStatusCode statusCode)
-    {
-        return statusCode switch
-        {
-            HttpStatusCode.BadRequest => "Bad request",
-            HttpStatusCode.NotFound => "Resource not found",
-            _ => "Internal server error"
-        };
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)statusCode;
+        await context.Response.WriteAsJsonAsync(ApiResponse<object?>.Fail(message));
     }
 }
