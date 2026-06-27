@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TaLentShowcase.API.Infrastructure.Persistence;
 using TaLentShowcase.API.Middleware;
@@ -9,7 +10,29 @@ using TaLentShowcase.API.Services.Interfaces;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value?.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors
+                        .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                            ? "The supplied value is invalid."
+                            : error.ErrorMessage)
+                        .ToArray());
+
+            return new BadRequestObjectResult(new
+            {
+                status = StatusCodes.Status400BadRequest,
+                message = "Validation failed.",
+                errors
+            });
+        };
+    });
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
