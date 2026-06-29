@@ -1,4 +1,4 @@
-﻿namespace backend.Models
+﻿namespace TalentShowcase.Api.Models
 {
     public class Result<T>
     {
