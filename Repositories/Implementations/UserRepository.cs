@@ -1,0 +1,27 @@
+using Microsoft.EntityFrameworkCore;
+using TalentShowcase.Api.Data;
+using TalentShowcase.Api.Models.Entities;
+using TalentShowcase.Api.Repositories.Interfaces;
+
+namespace TalentShowcase.Api.Repositories.Implementations
+{
+    public class UserRepository : GenericRepository<User>, IUserRepository
+    {
+        public UserRepository(AppDbContext context) : base(context) { }
+
+        public async Task<User?> GetByEmailAsync(string email) =>
+            await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+
+        public async Task<bool> ExistsByEmailAsync(string email) =>
+            await _dbSet.AnyAsync(u => u.Email == email);
+
+        public async Task<bool> ExistsByUsernameAsync(string username) =>
+            await _dbSet.AnyAsync(u => u.Username == username);
+
+        public async Task<User?> GetByIdWithProfileAsync(int id) =>
+            await _dbSet
+                .Include(u => u.Profile)
+                .ThenInclude(p => p!.Province)
+                .FirstOrDefaultAsync(u => u.Id == id);
+    }
+}

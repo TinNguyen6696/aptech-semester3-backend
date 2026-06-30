@@ -6,6 +6,7 @@
 		<RootNamespace>TalentShowcase.Api</RootNamespace>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
@@ -21,7 +22,18 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Folder Include="Controllers\" />
-	  <Folder Include="Repositories\" />
-	  <Folder Include="Services\" />
+	  <Folder Include="Data\Configurations\" />
+	  <Folder Include="Data\Migrations\" />
+	  <Folder Include="Data\Seeders\" />
+	  <Folder Include="DTOs\" />
+	  <Folder Include="Extensions\" />
+	  <Folder Include="Helpers\" />
+	  <Folder Include="Middlewares\" />
+	  <Folder Include="Models\Entities\" />
+	  <Folder Include="Models\Enums\" />
+	  <Folder Include="Repositories\Implementations\" />
+	  <Folder Include="Repositories\Interfaces\" />
+	  <Folder Include="Services\Implementations\" />
+	  <Folder Include="Services\Interfaces\" />
 	</ItemGroup>
 </Project>
