@@ -36,18 +36,18 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [Authorize]
-        [HttpGet("me")]
-        public async Task<IActionResult> Me()
-        {
-            var result = await _authService.MeAsync(CurrentUserId);
-            return StatusCode(result.StatusCode, result);
-        }
-
-        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             var result = await _authService.LogoutAsync(CurrentUserId, CurrentUserJti, CurrentUserTokenExpiry);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var result = await _authService.ChangePasswordAsync(CurrentUserId, request);
             return StatusCode(result.StatusCode, result);
         }
     }

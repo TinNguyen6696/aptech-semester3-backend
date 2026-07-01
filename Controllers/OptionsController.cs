@@ -14,7 +14,8 @@ namespace TalentShowcase.Api.Controllers
             {
                 Roles = Enum.GetNames<UserRole>().Where(r => r != nameof(UserRole.Admin)),
                 TalentCategories = Enum.GetNames<TalentCategory>(),
-                SkillLevels = Enum.GetNames<SkillLevel>()
+                SkillLevels = Enum.GetNames<SkillLevel>(),
+                AchievementTypes = Enum.GetNames<AchievementType>()
             };
 
             return Ok(new Result<OptionsDto>

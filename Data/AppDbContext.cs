@@ -14,6 +14,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<Province> Provinces => Set<Province>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<JwtDenylist> JwtDenylists => Set<JwtDenylist>();
+        public DbSet<Achievement> Achievements => Set<Achievement>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

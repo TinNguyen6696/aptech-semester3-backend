@@ -5,5 +5,6 @@ namespace TalentShowcase.Api.DTOs
         public IEnumerable<string> Roles { get; set; } = null!;
         public IEnumerable<string> TalentCategories { get; set; } = null!;
         public IEnumerable<string> SkillLevels { get; set; } = null!;
+        public IEnumerable<string> AchievementTypes { get; set; } = null!;
     }
 }

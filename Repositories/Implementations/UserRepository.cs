@@ -18,6 +18,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<bool> ExistsByUsernameAsync(string username) =>
             await _dbSet.AnyAsync(u => u.Username == username);
 
+        public async Task<bool> ExistsByUsernameAsync(string username, int excludeUserId) =>
+            await _dbSet.AnyAsync(u => u.Username == username && u.Id != excludeUserId);
+
         public async Task<User?> GetByIdWithProfileAsync(int id) =>
             await _dbSet
                 .Include(u => u.Profile)

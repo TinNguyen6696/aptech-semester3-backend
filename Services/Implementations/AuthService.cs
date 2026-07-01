@@ -98,16 +98,6 @@ namespace TalentShowcase.Api.Services.Implementations
             return await IssueTokensAsync(fullUser!, "Token refreshed successfully.");
         }
 
-        public async Task<Result<UserDto>> MeAsync(int userId)
-        {
-            var user = await _userRepo.GetByIdWithProfileAsync(userId);
-
-            if (user == null)
-                return new Result<UserDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
-
-            return new Result<UserDto> { Data = UserMapper.ToDto(user), IsSuccess = true, Message = "User retrieved successfully.", StatusCode = 200 };
-        }
-
         public async Task<Result<object>> LogoutAsync(int userId, string jti, DateTime jtiExpiresAt)
         {
             var denyEntry = new JwtDenylist { Jti = jti, ExpiredAt = jtiExpiresAt };
@@ -123,6 +113,31 @@ namespace TalentShowcase.Api.Services.Implementations
             await _jwtDenylistRepo.SaveChangesAsync();
 
             return new Result<object> { IsSuccess = true, Message = "Logged out successfully.", StatusCode = 200 };
+        }
+
+        public async Task<Result<object>> ChangePasswordAsync(int userId, ChangePasswordRequest request)
+        {
+            var user = await _userRepo.GetByIdAsync(userId);
+
+            if (user == null)
+                return new Result<object> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
+
+            if (!PasswordHelper.Verify(request.CurrentPassword, user.PasswordHash))
+                return new Result<object> { IsSuccess = false, Message = "Current password is incorrect.", StatusCode = 400 };
+
+            user.PasswordHash = PasswordHelper.Hash(request.NewPassword);
+            _userRepo.Update(user);
+            await _userRepo.SaveChangesAsync();
+
+            var tokens = await _refreshTokenRepo.GetActiveByUserIdAsync(userId);
+            foreach (var token in tokens)
+            {
+                token.Revoked = true;
+                _refreshTokenRepo.Update(token);
+            }
+            await _refreshTokenRepo.SaveChangesAsync();
+
+            return new Result<object> { IsSuccess = true, Message = "Password changed successfully. Please log in again.", StatusCode = 200 };
         }
 
         private async Task<Result<AuthResponse>> IssueTokensAsync(User user, string message)
