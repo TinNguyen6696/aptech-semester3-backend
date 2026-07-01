@@ -1,35 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
-using TalentShowcase.Api.Common;
-using TalentShowcase.Api.DTOs;
-using TalentShowcase.Api.Data;
-using Microsoft.EntityFrameworkCore;
+using TalentShowcase.Api.Services.Interfaces;
 
 namespace TalentShowcase.Api.Controllers
 {
     public class ProvincesController : BaseApiController
     {
-        private readonly AppDbContext _context;
+        private readonly IProvinceService _provinceService;
 
-        public ProvincesController(AppDbContext context)
+        public ProvincesController(IProvinceService provinceService)
         {
-            _context = context;
+            _provinceService = provinceService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetProvinces()
         {
-            var provinces = await _context.Provinces
-                .OrderBy(p => p.Id)
-                .Select(p => new ProvinceDto { Id = p.Id, Name = p.Name })
-                .ToListAsync();
-
-            return Ok(new Result<IEnumerable<ProvinceDto>>
-            {
-                Data = provinces,
-                IsSuccess = true,
-                Message = "Provinces retrieved successfully.",
-                StatusCode = 200
-            });
+            var result = await _provinceService.GetAllAsync();
+            return StatusCode(result.StatusCode, result);
         }
     }
 }

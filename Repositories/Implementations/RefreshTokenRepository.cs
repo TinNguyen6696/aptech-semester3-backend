@@ -13,5 +13,10 @@ namespace TalentShowcase.Api.Repositories.Implementations
             await _dbSet
                 .Include(rt => rt.User)
                 .FirstOrDefaultAsync(rt => rt.Token == token);
+
+        public async Task<IEnumerable<RefreshToken>> GetActiveByUserIdAsync(int userId) =>
+            await _dbSet
+                .Where(rt => rt.UserId == userId && !rt.Revoked)
+                .ToListAsync();
     }
 }

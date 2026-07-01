@@ -49,5 +49,7 @@ namespace TalentShowcase.Api.Helpers
             var bytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(bytes);
         }
+
+        public DateTime GetRefreshTokenExpiry() => DateTime.UtcNow.AddDays(_settings.RefreshTokenDays);
     }
 }

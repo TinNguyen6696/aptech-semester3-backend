@@ -16,11 +16,13 @@ namespace TalentShowcase.Api.Extensions
 
             services.AddScoped<JwtHelper>();
 
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IJwtDenylistRepository, JwtDenylistRepository>();
 
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IProvinceService, ProvinceService>();
 
             return services;
         }

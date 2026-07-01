@@ -13,17 +13,20 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IUserRepository _userRepo;
         private readonly IRefreshTokenRepository _refreshTokenRepo;
         private readonly IJwtDenylistRepository _jwtDenylistRepo;
+        private readonly IGenericRepository<Province> _provinceRepo;
         private readonly JwtHelper _jwtHelper;
 
         public AuthService(
             IUserRepository userRepo,
             IRefreshTokenRepository refreshTokenRepo,
             IJwtDenylistRepository jwtDenylistRepo,
+            IGenericRepository<Province> provinceRepo,
             JwtHelper jwtHelper)
         {
             _userRepo = userRepo;
             _refreshTokenRepo = refreshTokenRepo;
             _jwtDenylistRepo = jwtDenylistRepo;
+            _provinceRepo = provinceRepo;
             _jwtHelper = jwtHelper;
         }
 
@@ -32,11 +35,20 @@ namespace TalentShowcase.Api.Services.Implementations
             if (request.Role is not (UserRole.Member or UserRole.Mentor or UserRole.Recruiter))
                 return new Result<AuthResponse> { IsSuccess = false, Message = "Invalid role. Must be Member, Mentor, or Recruiter.", StatusCode = 400 };
 
+            if (!Enum.IsDefined(request.PrimaryCategory!.Value))
+                return new Result<AuthResponse> { IsSuccess = false, Message = "Invalid primary category.", StatusCode = 400 };
+
+            if (!Enum.IsDefined(request.SkillLevel!.Value))
+                return new Result<AuthResponse> { IsSuccess = false, Message = "Invalid skill level.", StatusCode = 400 };
+
             if (await _userRepo.ExistsByUsernameAsync(request.Username))
                 return new Result<AuthResponse> { IsSuccess = false, Message = "Username already taken.", StatusCode = 400 };
 
             if (await _userRepo.ExistsByEmailAsync(request.Email))
                 return new Result<AuthResponse> { IsSuccess = false, Message = "Email already in use.", StatusCode = 400 };
+
+            if (await _provinceRepo.GetByIdAsync(request.ProvinceId) == null)
+                return new Result<AuthResponse> { IsSuccess = false, Message = "Invalid province.", StatusCode = 400 };
 
             var user = new User
             {
@@ -101,8 +113,8 @@ namespace TalentShowcase.Api.Services.Implementations
             var denyEntry = new JwtDenylist { Jti = jti, ExpiredAt = jtiExpiresAt };
             await _jwtDenylistRepo.AddAsync(denyEntry);
 
-            var tokens = await _refreshTokenRepo.GetAllAsync();
-            foreach (var token in tokens.Where(t => t.UserId == userId && !t.Revoked))
+            var tokens = await _refreshTokenRepo.GetActiveByUserIdAsync(userId);
+            foreach (var token in tokens)
             {
                 token.Revoked = true;
                 _refreshTokenRepo.Update(token);
@@ -122,7 +134,7 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Token = refreshToken,
                 UserId = user.Id,
-                ExpiredAt = DateTime.UtcNow.AddDays(7)
+                ExpiredAt = _jwtHelper.GetRefreshTokenExpiry()
             };
 
             await _refreshTokenRepo.AddAsync(refreshTokenEntity);

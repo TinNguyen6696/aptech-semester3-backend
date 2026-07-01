@@ -59,7 +59,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseMiddleware<JtiDenylistMiddleware>();
+app.UseAuthorization();
 app.MapControllers();
 app.Run();
