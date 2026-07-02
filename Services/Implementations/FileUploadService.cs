@@ -7,7 +7,12 @@ namespace TalentShowcase.Api.Services.Implementations
 {
     public class FileUploadService : IFileUploadService
     {
-        private static readonly string[] AllowedContentTypes = { "image/jpeg", "image/png", "image/webp" };
+        private static readonly Dictionary<string, string> AllowedContentTypes = new()
+        {
+            ["image/jpeg"] = ".jpg",
+            ["image/png"] = ".png",
+            ["image/webp"] = ".webp"
+        };
         private const long MaxFileSizeBytes = 5 * 1024 * 1024;
 
         private readonly IWebHostEnvironment _env;
@@ -22,16 +27,16 @@ namespace TalentShowcase.Api.Services.Implementations
             if (file == null || file.Length == 0)
                 return new Result<string> { IsSuccess = false, Message = "No file provided.", StatusCode = 400 };
 
-            if (!AllowedContentTypes.Contains(file.ContentType))
+            if (!AllowedContentTypes.TryGetValue(file.ContentType, out var extension))
                 return new Result<string> { IsSuccess = false, Message = "Invalid file type. Allowed: JPEG, PNG, WEBP.", StatusCode = 400 };
 
             if (file.Length > MaxFileSizeBytes)
                 return new Result<string> { IsSuccess = false, Message = "File too large. Max size is 5MB.", StatusCode = 400 };
 
-            var uploadsPath = Path.Combine(_env.WebRootPath, "uploads");
+            var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var uploadsPath = Path.Combine(webRootPath, "uploads");
             Directory.CreateDirectory(uploadsPath);
 
-            var extension = Path.GetExtension(file.FileName);
             var fileName = $"{Guid.NewGuid()}{extension}";
             var filePath = Path.Combine(uploadsPath, fileName);
 

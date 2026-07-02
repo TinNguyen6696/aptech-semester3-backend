@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using TalentShowcase.Api.Common;
 using TalentShowcase.Api.Data;
 using TalentShowcase.Api.Extensions;
@@ -55,9 +56,15 @@ builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 
+var webRootPath = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(webRootPath);
+
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(webRootPath)
+});
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseMiddleware<JtiDenylistMiddleware>();
