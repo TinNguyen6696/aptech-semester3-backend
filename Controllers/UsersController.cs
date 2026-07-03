@@ -30,6 +30,13 @@ namespace TalentShowcase.Api.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("me/avatar")]
+        public async Task<IActionResult> UpdateAvatar([FromBody] UpdateAvatarRequest request)
+        {
+            var result = await _userService.UpdateAvatarAsync(CurrentUserId, request);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("me/achievements")]
         public async Task<IActionResult> GetAchievements()
         {

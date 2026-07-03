@@ -68,6 +68,21 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<UserDto> { Data = UserMapper.ToDto(updated!), IsSuccess = true, Message = "Profile updated successfully.", StatusCode = 200 };
         }
 
+        public async Task<Result<UserDto>> UpdateAvatarAsync(int userId, UpdateAvatarRequest request)
+        {
+            var user = await _userRepo.GetByIdWithProfileAsync(userId);
+
+            if (user == null)
+                return new Result<UserDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
+
+            user.Profile!.ProfileImageUrl = request.ProfileImageUrl;
+
+            _userRepo.Update(user);
+            await _userRepo.SaveChangesAsync();
+
+            return new Result<UserDto> { Data = UserMapper.ToDto(user), IsSuccess = true, Message = "Avatar updated successfully.", StatusCode = 200 };
+        }
+
         public async Task<Result<IEnumerable<AchievementDto>>> GetAchievementsAsync(int userId)
         {
             var achievements = await _achievementRepo.GetByUserIdAsync(userId);
