@@ -30,8 +30,5 @@ namespace TalentShowcase.Api.DTOs
 
         [Range(1, int.MaxValue, ErrorMessage = "ProvinceId is required.")]
         public int ProvinceId { get; set; }
-
-        [StringLength(255)]
-        public string? ProfileImageUrl { get; set; }
     }
 }

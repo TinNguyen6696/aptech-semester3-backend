@@ -59,7 +59,6 @@ namespace TalentShowcase.Api.Services.Implementations
             user.Profile.PrimaryCategory = request.PrimaryCategory!.Value;
             user.Profile.SkillLevel = request.SkillLevel!.Value;
             user.Profile.ProvinceId = request.ProvinceId;
-            user.Profile.ProfileImageUrl = request.ProfileImageUrl;
 
             _userRepo.Update(user);
             await _userRepo.SaveChangesAsync();
@@ -68,14 +67,14 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<UserDto> { Data = UserMapper.ToDto(updated!), IsSuccess = true, Message = "Profile updated successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<UserDto>> UpdateAvatarAsync(int userId, UpdateAvatarRequest request)
+        public async Task<Result<UserDto>> UpdateAvatarAsync(int userId, string? profileImageUrl)
         {
             var user = await _userRepo.GetByIdWithProfileAsync(userId);
 
             if (user == null)
                 return new Result<UserDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
 
-            user.Profile!.ProfileImageUrl = request.ProfileImageUrl;
+            user.Profile!.ProfileImageUrl = profileImageUrl;
 
             _userRepo.Update(user);
             await _userRepo.SaveChangesAsync();

@@ -12,6 +12,7 @@ namespace TalentShowcase.Api.DTOs.Auth
         public string LastName { get; set; } = null!;
         public string? Bio { get; set; }
         public string? PhoneNumber { get; set; }
+        public string? ProfileImageUrl { get; set; }
         public TalentCategory PrimaryCategory { get; set; }
         public SkillLevel SkillLevel { get; set; }
         public int ProvinceId { get; set; }

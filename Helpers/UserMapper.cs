@@ -15,6 +15,7 @@ namespace TalentShowcase.Api.Helpers
             LastName = user.Profile.LastName,
             Bio = user.Profile.Bio,
             PhoneNumber = user.Profile.PhoneNumber,
+            ProfileImageUrl = user.Profile.ProfileImageUrl,
             PrimaryCategory = user.Profile.PrimaryCategory,
             SkillLevel = user.Profile.SkillLevel,
             ProvinceId = user.Profile.ProvinceId,

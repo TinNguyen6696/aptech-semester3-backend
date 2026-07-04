@@ -10,10 +10,12 @@ namespace TalentShowcase.Api.Controllers
     public class UsersController : BaseApiController
     {
         private readonly IUserService _userService;
+        private readonly IFileUploadService _fileUploadService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IFileUploadService fileUploadService)
         {
             _userService = userService;
+            _fileUploadService = fileUploadService;
         }
 
         [HttpGet("me")]
@@ -31,9 +33,20 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPut("me/avatar")]
-        public async Task<IActionResult> UpdateAvatar([FromBody] UpdateAvatarRequest request)
+        public async Task<IActionResult> UpdateAvatar(IFormFile file)
         {
-            var result = await _userService.UpdateAvatarAsync(CurrentUserId, request);
+            var upload = await _fileUploadService.UploadImageAsync(file);
+            if (!upload.IsSuccess)
+                return StatusCode(upload.StatusCode, upload);
+
+            var result = await _userService.UpdateAvatarAsync(CurrentUserId, upload.Data);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("me/avatar")]
+        public async Task<IActionResult> DeleteAvatar()
+        {
+            var result = await _userService.UpdateAvatarAsync(CurrentUserId, null);
             return StatusCode(result.StatusCode, result);
         }
 

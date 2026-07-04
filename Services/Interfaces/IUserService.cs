@@ -9,7 +9,7 @@ namespace TalentShowcase.Api.Services.Interfaces
     {
         Task<Result<UserDto>> GetProfileAsync(int userId);
         Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request);
-        Task<Result<UserDto>> UpdateAvatarAsync(int userId, UpdateAvatarRequest request);
+        Task<Result<UserDto>> UpdateAvatarAsync(int userId, string? profileImageUrl);
 
         Task<Result<IEnumerable<AchievementDto>>> GetAchievementsAsync(int userId);
         Task<Result<AchievementDto>> AddAchievementAsync(int userId, CreateAchievementRequest request);
