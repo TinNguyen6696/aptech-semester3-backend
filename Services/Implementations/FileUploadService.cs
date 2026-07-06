@@ -7,13 +7,19 @@ namespace TalentShowcase.Api.Services.Implementations
 {
     public class FileUploadService : IFileUploadService
     {
-        private static readonly Dictionary<string, string> AllowedContentTypes = new()
+        private static readonly Dictionary<string, string> AllowedImageTypes = new()
         {
             ["image/jpeg"] = ".jpg",
             ["image/png"] = ".png",
             ["image/webp"] = ".webp"
         };
-        private const long MaxFileSizeBytes = 5 * 1024 * 1024;
+        private const long MaxImageSizeBytes = 5 * 1024 * 1024;
+
+        private static readonly Dictionary<string, string> AllowedVideoTypes = new()
+        {
+            ["video/mp4"] = ".mp4"
+        };
+        private const long MaxVideoSizeBytes = 50 * 1024 * 1024;
 
         private readonly IWebHostEnvironment _env;
 
@@ -22,19 +28,25 @@ namespace TalentShowcase.Api.Services.Implementations
             _env = env;
         }
 
-        public async Task<Result<string>> UploadImageAsync(IFormFile file)
+        public Task<Result<string>> UploadImageAsync(IFormFile file) =>
+            SaveAsync(file, AllowedImageTypes, MaxImageSizeBytes, "images", "Invalid file type. Allowed: JPEG, PNG, WEBP.", "File too large. Max size is 5MB.");
+
+        public Task<Result<string>> UploadVideoAsync(IFormFile file) =>
+            SaveAsync(file, AllowedVideoTypes, MaxVideoSizeBytes, "videos", "Invalid file type. Allowed: MP4.", "File too large. Max size is 50MB.");
+
+        private async Task<Result<string>> SaveAsync(IFormFile file, Dictionary<string, string> allowedContentTypes, long maxSizeBytes, string subfolder, string invalidTypeMessage, string tooLargeMessage)
         {
             if (file == null || file.Length == 0)
                 return new Result<string> { IsSuccess = false, Message = "No file provided.", StatusCode = 400 };
 
-            if (!AllowedContentTypes.TryGetValue(file.ContentType, out var extension))
-                return new Result<string> { IsSuccess = false, Message = "Invalid file type. Allowed: JPEG, PNG, WEBP.", StatusCode = 400 };
+            if (!allowedContentTypes.TryGetValue(file.ContentType, out var extension))
+                return new Result<string> { IsSuccess = false, Message = invalidTypeMessage, StatusCode = 400 };
 
-            if (file.Length > MaxFileSizeBytes)
-                return new Result<string> { IsSuccess = false, Message = "File too large. Max size is 5MB.", StatusCode = 400 };
+            if (file.Length > maxSizeBytes)
+                return new Result<string> { IsSuccess = false, Message = tooLargeMessage, StatusCode = 400 };
 
             var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
-            var uploadsPath = Path.Combine(webRootPath, "uploads");
+            var uploadsPath = Path.Combine(webRootPath, "uploads", subfolder);
             Directory.CreateDirectory(uploadsPath);
 
             var fileName = $"{Guid.NewGuid()}{extension}";
@@ -45,7 +57,7 @@ namespace TalentShowcase.Api.Services.Implementations
                 await file.CopyToAsync(stream);
             }
 
-            return new Result<string> { Data = $"/uploads/{fileName}", IsSuccess = true, Message = "Image uploaded successfully.", StatusCode = 200 };
+            return new Result<string> { Data = $"/uploads/{subfolder}/{fileName}", IsSuccess = true, Message = "File uploaded successfully.", StatusCode = 200 };
         }
     }
 }

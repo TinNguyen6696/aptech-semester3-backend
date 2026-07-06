@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TalentShowcase.Api.DTOs;
 using TalentShowcase.Api.DTOs.Achievements;
+using TalentShowcase.Api.DTOs.Videos;
 using TalentShowcase.Api.Services.Interfaces;
 
 namespace TalentShowcase.Api.Controllers
@@ -11,11 +12,13 @@ namespace TalentShowcase.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly IFileUploadService _fileUploadService;
+        private readonly IVideoService _videoService;
 
-        public UsersController(IUserService userService, IFileUploadService fileUploadService)
+        public UsersController(IUserService userService, IFileUploadService fileUploadService, IVideoService videoService)
         {
             _userService = userService;
             _fileUploadService = fileUploadService;
+            _videoService = videoService;
         }
 
         [HttpGet("me")]
@@ -58,14 +61,14 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("me/achievements")]
-        public async Task<IActionResult> AddAchievement([FromBody] CreateAchievementRequest request)
+        public async Task<IActionResult> AddAchievement([FromForm] CreateAchievementRequest request)
         {
             var result = await _userService.AddAchievementAsync(CurrentUserId, request);
             return StatusCode(result.StatusCode, result);
         }
 
         [HttpPut("me/achievements/{id}")]
-        public async Task<IActionResult> UpdateAchievement(int id, [FromBody] UpdateAchievementRequest request)
+        public async Task<IActionResult> UpdateAchievement(int id, [FromForm] UpdateAchievementRequest request)
         {
             var result = await _userService.UpdateAchievementAsync(CurrentUserId, id, request);
             return StatusCode(result.StatusCode, result);
@@ -75,6 +78,35 @@ namespace TalentShowcase.Api.Controllers
         public async Task<IActionResult> DeleteAchievement(int id)
         {
             var result = await _userService.DeleteAchievementAsync(CurrentUserId, id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("me/videos")]
+        public async Task<IActionResult> GetMyVideos()
+        {
+            var result = await _videoService.GetMyVideosAsync(CurrentUserId);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("me/videos")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> AddVideo([FromForm] CreateVideoRequest request)
+        {
+            var result = await _videoService.AddVideoAsync(CurrentUserId, request);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPut("me/videos/{id}")]
+        public async Task<IActionResult> UpdateVideo(int id, [FromBody] UpdateVideoRequest request)
+        {
+            var result = await _videoService.UpdateVideoAsync(CurrentUserId, id, request);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("me/videos/{id}")]
+        public async Task<IActionResult> DeleteVideo(int id)
+        {
+            var result = await _videoService.DeleteVideoAsync(CurrentUserId, id);
             return StatusCode(result.StatusCode, result);
         }
     }

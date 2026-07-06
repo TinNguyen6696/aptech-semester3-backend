@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using TalentShowcase.Api.Models.Enums;
 
 namespace TalentShowcase.Api.DTOs.Achievements
@@ -17,8 +18,7 @@ namespace TalentShowcase.Api.DTOs.Achievements
 
         public DateTime? IssuedDate { get; set; }
 
-        [StringLength(255)]
-        public string? CertificateUrl { get; set; }
+        public IFormFile? CertificateImage { get; set; }
 
         public string? Description { get; set; }
     }

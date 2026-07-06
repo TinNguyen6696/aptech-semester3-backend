@@ -27,6 +27,10 @@ namespace TalentShowcase.Api.Data.Configurations
                 .HasMaxLength(20)
                 .HasConversion<string>();
 
+            builder.Property(u => u.IsActive)
+                .IsRequired()
+                .HasDefaultValue(true);
+
             builder.HasIndex(u => u.Username).IsUnique();
             builder.HasIndex(u => u.Email).IsUnique();
         }

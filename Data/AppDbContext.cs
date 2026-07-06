@@ -15,6 +15,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<JwtDenylist> JwtDenylists => Set<JwtDenylist>();
         public DbSet<Achievement> Achievements => Set<Achievement>();
+        public DbSet<Video> Videos => Set<Video>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -21,11 +21,13 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IJwtDenylistRepository, JwtDenylistRepository>();
             services.AddScoped<IAchievementRepository, AchievementRepository>();
+            services.AddScoped<IVideoRepository, VideoRepository>();
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProvinceService, ProvinceService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFileUploadService, FileUploadService>();
+            services.AddScoped<IVideoService, VideoService>();
 
             return services;
         }

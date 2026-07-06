@@ -14,12 +14,14 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IUserRepository _userRepo;
         private readonly IGenericRepository<Province> _provinceRepo;
         private readonly IAchievementRepository _achievementRepo;
+        private readonly IFileUploadService _fileUploadService;
 
-        public UserService(IUserRepository userRepo, IGenericRepository<Province> provinceRepo, IAchievementRepository achievementRepo)
+        public UserService(IUserRepository userRepo, IGenericRepository<Province> provinceRepo, IAchievementRepository achievementRepo, IFileUploadService fileUploadService)
         {
             _userRepo = userRepo;
             _provinceRepo = provinceRepo;
             _achievementRepo = achievementRepo;
+            _fileUploadService = fileUploadService;
         }
 
         public async Task<Result<UserDto>> GetProfileAsync(int userId)
@@ -98,6 +100,16 @@ namespace TalentShowcase.Api.Services.Implementations
             if (request.IssuedDate.HasValue && request.IssuedDate.Value > DateTime.UtcNow)
                 return new Result<AchievementDto> { IsSuccess = false, Message = "Issued date cannot be in the future.", StatusCode = 400 };
 
+            string? certificateUrl = null;
+            if (request.CertificateImage != null)
+            {
+                var upload = await _fileUploadService.UploadImageAsync(request.CertificateImage);
+                if (!upload.IsSuccess)
+                    return new Result<AchievementDto> { IsSuccess = false, Message = upload.Message, StatusCode = upload.StatusCode };
+
+                certificateUrl = upload.Data;
+            }
+
             var achievement = new Achievement
             {
                 UserId = userId,
@@ -105,7 +117,7 @@ namespace TalentShowcase.Api.Services.Implementations
                 Title = request.Title,
                 Issuer = request.Issuer,
                 IssuedDate = request.IssuedDate,
-                CertificateUrl = request.CertificateUrl,
+                CertificateUrl = certificateUrl,
                 Description = request.Description
             };
 
@@ -128,11 +140,19 @@ namespace TalentShowcase.Api.Services.Implementations
             if (request.IssuedDate.HasValue && request.IssuedDate.Value > DateTime.UtcNow)
                 return new Result<AchievementDto> { IsSuccess = false, Message = "Issued date cannot be in the future.", StatusCode = 400 };
 
+            if (request.CertificateImage != null)
+            {
+                var upload = await _fileUploadService.UploadImageAsync(request.CertificateImage);
+                if (!upload.IsSuccess)
+                    return new Result<AchievementDto> { IsSuccess = false, Message = upload.Message, StatusCode = upload.StatusCode };
+
+                achievement.CertificateUrl = upload.Data;
+            }
+
             achievement.Type = request.Type!.Value;
             achievement.Title = request.Title;
             achievement.Issuer = request.Issuer;
             achievement.IssuedDate = request.IssuedDate;
-            achievement.CertificateUrl = request.CertificateUrl;
             achievement.Description = request.Description;
 
             _achievementRepo.Update(achievement);
