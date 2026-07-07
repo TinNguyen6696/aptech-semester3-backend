@@ -28,6 +28,34 @@ namespace TalentShowcase.Api.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request)
+        {
+            var result = await _authService.VerifyEmailAsync(request);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("resend-verification")]
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest request)
+        {
+            var result = await _authService.ResendVerificationAsync(request);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var result = await _authService.ForgotPasswordAsync(request);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            var result = await _authService.ResetPasswordAsync(request);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
         {

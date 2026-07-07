@@ -14,6 +14,12 @@ namespace TalentShowcase.Api.Extensions
             services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
             services.AddSingleton(sp => sp.GetRequiredService<IOptions<JwtSettings>>().Value);
 
+            services.Configure<SmtpSettings>(configuration.GetSection("Smtp"));
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<SmtpSettings>>().Value);
+
+            services.Configure<AppSettings>(configuration.GetSection("App"));
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
+
             services.AddScoped<JwtHelper>();
 
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -22,7 +28,9 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<IJwtDenylistRepository, JwtDenylistRepository>();
             services.AddScoped<IAchievementRepository, AchievementRepository>();
             services.AddScoped<IVideoRepository, VideoRepository>();
+            services.AddScoped<IUserTokenRepository, UserTokenRepository>();
 
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProvinceService, ProvinceService>();
             services.AddScoped<IUserService, UserService>();

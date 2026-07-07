@@ -2,10 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TalentShowcase.Api.DTOs.Auth
 {
-    public class ChangePasswordRequest
+    public class ResetPasswordRequest
     {
         [Required]
-        public string CurrentPassword { get; set; } = null!;
+        public string Token { get; set; } = null!;
 
         [Required]
         [StringLength(100, MinimumLength = 6)]

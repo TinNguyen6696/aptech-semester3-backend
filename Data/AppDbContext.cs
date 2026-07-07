@@ -13,6 +13,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
         public DbSet<Province> Provinces => Set<Province>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+        public DbSet<UserToken> UserTokens => Set<UserToken>();
         public DbSet<JwtDenylist> JwtDenylists => Set<JwtDenylist>();
         public DbSet<Achievement> Achievements => Set<Achievement>();
         public DbSet<Video> Videos => Set<Video>();

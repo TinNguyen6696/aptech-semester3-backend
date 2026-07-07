@@ -9,8 +9,10 @@ namespace TalentShowcase.Api.Models.Entities
         public string PasswordHash { get; set; } = null!;
         public UserRole Role { get; set; } = UserRole.Member;
         public bool IsActive { get; set; } = true;
+        public bool EmailConfirmed { get; set; }
 
         public UserProfile? Profile { get; set; }
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<UserToken> UserTokens { get; set; } = new List<UserToken>();
     }
 }
