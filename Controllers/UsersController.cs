@@ -97,6 +97,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPut("me/videos/{id}")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> UpdateVideo(int id, [FromBody] UpdateVideoRequest request)
         {
             var result = await _videoService.UpdateVideoAsync(CurrentUserId, id, request);
@@ -104,6 +105,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpDelete("me/videos/{id}")]
+        [Authorize(Roles = "Member")]
         public async Task<IActionResult> DeleteVideo(int id)
         {
             var result = await _videoService.DeleteVideoAsync(CurrentUserId, id);
