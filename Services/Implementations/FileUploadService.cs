@@ -19,7 +19,7 @@ namespace TalentShowcase.Api.Services.Implementations
         {
             ["video/mp4"] = ".mp4"
         };
-        private const long MaxVideoSizeBytes = 50 * 1024 * 1024;
+        private const long MaxVideoSizeBytes = 300 * 1024 * 1024;
 
         private readonly IWebHostEnvironment _env;
 
@@ -32,7 +32,7 @@ namespace TalentShowcase.Api.Services.Implementations
             SaveAsync(file, AllowedImageTypes, MaxImageSizeBytes, "images", "Invalid file type. Allowed: JPEG, PNG, WEBP.", "File too large. Max size is 5MB.");
 
         public Task<Result<string>> UploadVideoAsync(IFormFile file) =>
-            SaveAsync(file, AllowedVideoTypes, MaxVideoSizeBytes, "videos", "Invalid file type. Allowed: MP4.", "File too large. Max size is 50MB.");
+            SaveAsync(file, AllowedVideoTypes, MaxVideoSizeBytes, "videos", "Invalid file type. Allowed: MP4.", "File too large. Max size is 300MB.");
 
         private async Task<Result<string>> SaveAsync(IFormFile file, Dictionary<string, string> allowedContentTypes, long maxSizeBytes, string subfolder, string invalidTypeMessage, string tooLargeMessage)
         {

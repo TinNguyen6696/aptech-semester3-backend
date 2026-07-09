@@ -10,7 +10,7 @@ using TalentShowcase.Api.Data;
 using TalentShowcase.Api.Extensions;
 using TalentShowcase.Api.Middlewares;
 
-const long MaxVideoUploadSizeBytes = 50 * 1024 * 1024;
+const long MaxVideoUploadSizeBytes = 300 * 1024 * 1024;
 
 var builder = WebApplication.CreateBuilder(args);
 
