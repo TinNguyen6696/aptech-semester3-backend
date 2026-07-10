@@ -95,6 +95,9 @@ namespace TalentShowcase.Api.Services.Implementations
             _videoRepo.Remove(video);
             await _videoRepo.SaveChangesAsync();
 
+            _fileUploadService.DeleteFile(video.VideoUrl);
+            _fileUploadService.DeleteFile(video.ThumbnailUrl);
+
             return new Result<object> { IsSuccess = true, Message = "Video deleted successfully.", StatusCode = 200 };
         }
 

@@ -59,5 +59,35 @@ namespace TalentShowcase.Api.Services.Implementations
 
             return new Result<string> { Data = $"/uploads/{subfolder}/{fileName}", IsSuccess = true, Message = "File uploaded successfully.", StatusCode = 200 };
         }
+
+        public void DeleteFile(string? fileUrl)
+        {
+            if (string.IsNullOrWhiteSpace(fileUrl))
+                return;
+
+            var webRootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var uploadsRoot = Path.GetFullPath(Path.Combine(webRootPath, "uploads"));
+
+            var fullPath = Path.GetFullPath(Path.Combine(webRootPath, fileUrl.TrimStart('/')));
+
+            // Guard against path traversal: only ever delete inside the uploads folder.
+            if (!fullPath.StartsWith(uploadsRoot + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                return;
+
+            try
+            {
+                if (File.Exists(fullPath))
+                    File.Delete(fullPath);
+            }
+            catch (IOException)
+            {
+                // Best-effort cleanup: the DB record is already gone, so a locked/missing
+                // file must not fail the request. Leaving an orphan is acceptable here.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Same as above.
+            }
+        }
     }
 }
