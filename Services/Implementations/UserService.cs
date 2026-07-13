@@ -2,6 +2,7 @@ using TalentShowcase.Api.Common;
 using TalentShowcase.Api.DTOs;
 using TalentShowcase.Api.DTOs.Achievements;
 using TalentShowcase.Api.DTOs.Auth;
+using TalentShowcase.Api.DTOs.Users;
 using TalentShowcase.Api.Helpers;
 using TalentShowcase.Api.Models.Entities;
 using TalentShowcase.Api.Repositories.Interfaces;
@@ -32,6 +33,33 @@ namespace TalentShowcase.Api.Services.Implementations
                 return new Result<UserDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
 
             return new Result<UserDto> { Data = UserMapper.ToDto(user), IsSuccess = true, Message = "Profile retrieved successfully.", StatusCode = 200 };
+        }
+
+        public async Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId)
+        {
+            var user = await _userRepo.GetPublicByIdAsync(userId);
+
+            if (user == null)
+                return new Result<PublicProfileDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
+
+            var achievements = await _achievementRepo.GetByUserIdAsync(userId);
+
+            var dto = new PublicProfileDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                FirstName = user.Profile!.FirstName,
+                LastName = user.Profile.LastName,
+                Bio = user.Profile.Bio,
+                ProfileImageUrl = user.Profile.ProfileImageUrl,
+                PrimaryCategory = user.Profile.PrimaryCategory,
+                SkillLevel = user.Profile.SkillLevel,
+                ProvinceId = user.Profile.ProvinceId,
+                ProvinceName = user.Profile.Province!.Name,
+                Achievements = achievements.OrderByDescending(a => a.CreatedAt).Select(ToDto)
+            };
+
+            return new Result<PublicProfileDto> { Data = dto, IsSuccess = true, Message = "Profile retrieved successfully.", StatusCode = 200 };
         }
 
         public async Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request)
@@ -103,7 +131,7 @@ namespace TalentShowcase.Api.Services.Implementations
             string? certificateUrl = null;
             if (request.CertificateImage != null)
             {
-                var upload = await _fileUploadService.UploadImageAsync(request.CertificateImage);
+                var upload = await _fileUploadService.UploadCertificateAsync(request.CertificateImage);
                 if (!upload.IsSuccess)
                     return new Result<AchievementDto> { IsSuccess = false, Message = upload.Message, StatusCode = upload.StatusCode };
 
@@ -118,6 +146,7 @@ namespace TalentShowcase.Api.Services.Implementations
                 Issuer = request.Issuer,
                 IssuedDate = request.IssuedDate,
                 CertificateUrl = certificateUrl,
+                ExternalUrl = request.ExternalUrl,
                 Description = request.Description
             };
 
@@ -142,7 +171,7 @@ namespace TalentShowcase.Api.Services.Implementations
 
             if (request.CertificateImage != null)
             {
-                var upload = await _fileUploadService.UploadImageAsync(request.CertificateImage);
+                var upload = await _fileUploadService.UploadCertificateAsync(request.CertificateImage);
                 if (!upload.IsSuccess)
                     return new Result<AchievementDto> { IsSuccess = false, Message = upload.Message, StatusCode = upload.StatusCode };
 
@@ -153,6 +182,7 @@ namespace TalentShowcase.Api.Services.Implementations
             achievement.Title = request.Title;
             achievement.Issuer = request.Issuer;
             achievement.IssuedDate = request.IssuedDate;
+            achievement.ExternalUrl = request.ExternalUrl;
             achievement.Description = request.Description;
 
             _achievementRepo.Update(achievement);
@@ -182,6 +212,7 @@ namespace TalentShowcase.Api.Services.Implementations
             Issuer = achievement.Issuer,
             IssuedDate = achievement.IssuedDate,
             CertificateUrl = achievement.CertificateUrl,
+            ExternalUrl = achievement.ExternalUrl,
             Description = achievement.Description,
             CreatedAt = achievement.CreatedAt
         };

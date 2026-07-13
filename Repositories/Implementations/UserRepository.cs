@@ -26,5 +26,11 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Include(u => u.Profile)
                 .ThenInclude(p => p!.Province)
                 .FirstOrDefaultAsync(u => u.Id == id);
+
+        public async Task<User?> GetPublicByIdAsync(int id) =>
+            await _dbSet
+                .Include(u => u.Profile)
+                .ThenInclude(p => p!.Province)
+                .FirstOrDefaultAsync(u => u.Id == id && u.IsActive);
     }
 }

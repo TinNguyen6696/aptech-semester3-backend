@@ -127,6 +127,29 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<PublicVideoListDto> { Data = result, IsSuccess = true, Message = "Videos retrieved successfully.", StatusCode = 200 };
         }
 
+        public async Task<Result<PublicVideoListDto>> GetPublicVideosByUserAsync(int userId, int page, int pageSize)
+        {
+            if (page < 1)
+                return new Result<PublicVideoListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<PublicVideoListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _videoRepo.CountPublicByUserIdAsync(userId);
+            var videos = await _videoRepo.GetPublicByUserIdAsync(userId, page, pageSize);
+
+            var result = new PublicVideoListDto
+            {
+                Videos = videos.Select(ToPublicDto),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<PublicVideoListDto> { Data = result, IsSuccess = true, Message = "Videos retrieved successfully.", StatusCode = 200 };
+        }
+
         public async Task<Result<PublicVideoDto>> GetPublicVideoByIdAsync(int id)
         {
             var video = await _videoRepo.GetPublicByIdAsync(id);

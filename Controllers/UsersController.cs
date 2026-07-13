@@ -10,6 +10,8 @@ namespace TalentShowcase.Api.Controllers
     [Authorize]
     public class UsersController : BaseApiController
     {
+        private const int DefaultPageSize = 10;
+
         private readonly IUserService _userService;
         private readonly IFileUploadService _fileUploadService;
         private readonly IVideoService _videoService;
@@ -25,6 +27,22 @@ namespace TalentShowcase.Api.Controllers
         public async Task<IActionResult> GetMe()
         {
             var result = await _userService.GetProfileAsync(CurrentUserId);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPublicProfile(int id)
+        {
+            var result = await _userService.GetPublicProfileAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id:int}/videos")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetUserPublicVideos(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _videoService.GetPublicVideosByUserAsync(id, page, pageSize);
             return StatusCode(result.StatusCode, result);
         }
 

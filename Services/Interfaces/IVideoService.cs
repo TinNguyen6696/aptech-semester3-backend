@@ -10,6 +10,7 @@ namespace TalentShowcase.Api.Services.Interfaces
         Task<Result<VideoDto>> AddVideoAsync(int userId, CreateVideoRequest request);
         Task<Result<VideoDto>> UpdateVideoAsync(int userId, int videoId, UpdateVideoRequest request);
         Task<Result<object>> DeleteVideoAsync(int userId, int videoId);
+        Task<Result<PublicVideoListDto>> GetPublicVideosByUserAsync(int userId, int page, int pageSize);
         Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, int page, int pageSize);
         Task<Result<PublicVideoDto>> GetPublicVideoByIdAsync(int id);
     }

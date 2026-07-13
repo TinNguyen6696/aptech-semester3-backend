@@ -9,6 +9,8 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<int> CountByUserIdAsync(int userId);
         Task<IEnumerable<Video>> GetPublicAsync(TalentCategory? category, int page, int pageSize);
         Task<int> CountPublicAsync(TalentCategory? category);
+        Task<IEnumerable<Video>> GetPublicByUserIdAsync(int userId, int page, int pageSize);
+        Task<int> CountPublicByUserIdAsync(int userId);
         Task<Video?> GetPublicByIdAsync(int id);
     }
 }

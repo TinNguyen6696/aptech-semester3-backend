@@ -34,6 +34,22 @@ namespace TalentShowcase.Api.Repositories.Implementations
                     .ThenInclude(u => u.Profile)
                 .FirstOrDefaultAsync(v => v.Id == id && v.Visibility == VideoVisibility.Public);
 
+        public async Task<IEnumerable<Video>> GetPublicByUserIdAsync(int userId, int page, int pageSize) =>
+            await PublicByUserQuery(userId)
+                .OrderByDescending(v => v.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountPublicByUserIdAsync(int userId) =>
+            await PublicByUserQuery(userId).CountAsync();
+
+        private IQueryable<Video> PublicByUserQuery(int userId) =>
+            _dbSet
+                .Include(v => v.User)
+                    .ThenInclude(u => u.Profile)
+                .Where(v => v.UserId == userId && v.Visibility == VideoVisibility.Public);
+
         private IQueryable<Video> PublicQuery(TalentCategory? category)
         {
             var query = _dbSet

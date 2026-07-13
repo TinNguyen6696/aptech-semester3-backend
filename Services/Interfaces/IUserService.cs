@@ -2,12 +2,14 @@ using TalentShowcase.Api.Common;
 using TalentShowcase.Api.DTOs;
 using TalentShowcase.Api.DTOs.Achievements;
 using TalentShowcase.Api.DTOs.Auth;
+using TalentShowcase.Api.DTOs.Users;
 
 namespace TalentShowcase.Api.Services.Interfaces
 {
     public interface IUserService
     {
         Task<Result<UserDto>> GetProfileAsync(int userId);
+        Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId);
         Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request);
         Task<Result<UserDto>> UpdateAvatarAsync(int userId, string? profileImageUrl);
 
