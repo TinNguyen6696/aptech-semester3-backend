@@ -21,6 +21,15 @@ namespace TalentShowcase.Api.Services.Implementations
         };
         private const long MaxVideoSizeBytes = 300 * 1024 * 1024;
 
+        private static readonly Dictionary<string, string> AllowedCertificateTypes = new()
+        {
+            ["image/jpeg"] = ".jpg",
+            ["image/png"] = ".png",
+            ["image/webp"] = ".webp",
+            ["application/pdf"] = ".pdf"
+        };
+        private const long MaxCertificateSizeBytes = 10 * 1024 * 1024;
+
         private readonly IWebHostEnvironment _env;
 
         public FileUploadService(IWebHostEnvironment env)
@@ -33,6 +42,9 @@ namespace TalentShowcase.Api.Services.Implementations
 
         public Task<Result<string>> UploadVideoAsync(IFormFile file) =>
             SaveAsync(file, AllowedVideoTypes, MaxVideoSizeBytes, "videos", "Invalid file type. Allowed: MP4.", "File too large. Max size is 300MB.");
+
+        public Task<Result<string>> UploadCertificateAsync(IFormFile file) =>
+            SaveAsync(file, AllowedCertificateTypes, MaxCertificateSizeBytes, "certificates", "Invalid file type. Allowed: JPEG, PNG, WEBP, PDF.", "File too large. Max size is 10MB.");
 
         private async Task<Result<string>> SaveAsync(IFormFile file, Dictionary<string, string> allowedContentTypes, long maxSizeBytes, string subfolder, string invalidTypeMessage, string tooLargeMessage)
         {

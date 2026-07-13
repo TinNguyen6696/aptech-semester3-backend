@@ -7,6 +7,7 @@ namespace TalentShowcase.Api.Services.Interfaces
     {
         Task<Result<string>> UploadImageAsync(IFormFile file);
         Task<Result<string>> UploadVideoAsync(IFormFile file);
+        Task<Result<string>> UploadCertificateAsync(IFormFile file);
         void DeleteFile(string? fileUrl);
     }
 }

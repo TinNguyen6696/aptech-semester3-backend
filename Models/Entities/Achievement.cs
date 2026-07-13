@@ -10,6 +10,7 @@ namespace TalentShowcase.Api.Models.Entities
         public string? Issuer { get; set; }
         public DateTime? IssuedDate { get; set; }
         public string? CertificateUrl { get; set; }
+        public string? ExternalUrl { get; set; }
         public string? Description { get; set; }
 
         public User User { get; set; } = null!;

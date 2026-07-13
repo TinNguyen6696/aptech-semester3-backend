@@ -20,6 +20,10 @@ namespace TalentShowcase.Api.DTOs.Achievements
 
         public IFormFile? CertificateImage { get; set; }
 
+        [Url]
+        [StringLength(500)]
+        public string? ExternalUrl { get; set; }
+
         public string? Description { get; set; }
     }
 }

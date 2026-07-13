@@ -25,6 +25,9 @@ namespace TalentShowcase.Api.Data.Configurations
             builder.Property(a => a.CertificateUrl)
                 .HasMaxLength(255);
 
+            builder.Property(a => a.ExternalUrl)
+                .HasMaxLength(500);
+
             builder.HasIndex(a => a.UserId);
 
             builder.HasOne(a => a.User)
