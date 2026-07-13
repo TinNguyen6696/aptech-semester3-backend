@@ -16,13 +16,15 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IGenericRepository<Province> _provinceRepo;
         private readonly IAchievementRepository _achievementRepo;
         private readonly IFileUploadService _fileUploadService;
+        private readonly IFollowRepository _followRepo;
 
-        public UserService(IUserRepository userRepo, IGenericRepository<Province> provinceRepo, IAchievementRepository achievementRepo, IFileUploadService fileUploadService)
+        public UserService(IUserRepository userRepo, IGenericRepository<Province> provinceRepo, IAchievementRepository achievementRepo, IFileUploadService fileUploadService, IFollowRepository followRepo)
         {
             _userRepo = userRepo;
             _provinceRepo = provinceRepo;
             _achievementRepo = achievementRepo;
             _fileUploadService = fileUploadService;
+            _followRepo = followRepo;
         }
 
         public async Task<Result<UserDto>> GetProfileAsync(int userId)
@@ -35,7 +37,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<UserDto> { Data = UserMapper.ToDto(user), IsSuccess = true, Message = "Profile retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId)
+        public async Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId, int? currentUserId)
         {
             var user = await _userRepo.GetPublicByIdAsync(userId);
 
@@ -43,6 +45,13 @@ namespace TalentShowcase.Api.Services.Implementations
                 return new Result<PublicProfileDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
 
             var achievements = await _achievementRepo.GetByUserIdAsync(userId);
+            var followerCount = await _followRepo.CountFollowersAsync(userId);
+            var followingCount = await _followRepo.CountFollowingAsync(userId);
+
+            // null = anonymous viewer or viewing your own profile (no follow button to show either way).
+            bool? isFollowing = null;
+            if (currentUserId.HasValue && currentUserId.Value != userId)
+                isFollowing = await _followRepo.GetAsync(currentUserId.Value, userId) != null;
 
             var dto = new PublicProfileDto
             {
@@ -56,6 +65,9 @@ namespace TalentShowcase.Api.Services.Implementations
                 SkillLevel = user.Profile.SkillLevel,
                 ProvinceId = user.Profile.ProvinceId,
                 ProvinceName = user.Profile.Province!.Name,
+                FollowerCount = followerCount,
+                FollowingCount = followingCount,
+                IsFollowing = isFollowing,
                 Achievements = achievements.OrderByDescending(a => a.CreatedAt).Select(ToDto)
             };
 

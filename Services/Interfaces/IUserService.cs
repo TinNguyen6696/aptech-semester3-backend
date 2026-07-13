@@ -9,7 +9,7 @@ namespace TalentShowcase.Api.Services.Interfaces
     public interface IUserService
     {
         Task<Result<UserDto>> GetProfileAsync(int userId);
-        Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId);
+        Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId, int? currentUserId);
         Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request);
         Task<Result<UserDto>> UpdateAvatarAsync(int userId, string? profileImageUrl);
 

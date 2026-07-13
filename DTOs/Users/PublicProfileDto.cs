@@ -15,6 +15,9 @@ namespace TalentShowcase.Api.DTOs.Users
         public SkillLevel SkillLevel { get; set; }
         public int ProvinceId { get; set; }
         public string ProvinceName { get; set; } = null!;
+        public int FollowerCount { get; set; }
+        public int FollowingCount { get; set; }
+        public bool? IsFollowing { get; set; }
         public IEnumerable<AchievementDto> Achievements { get; set; } = new List<AchievementDto>();
     }
 }

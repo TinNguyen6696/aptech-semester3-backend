@@ -1,0 +1,107 @@
+using TalentShowcase.Api.Common;
+using TalentShowcase.Api.DTOs.Follows;
+using TalentShowcase.Api.Models.Entities;
+using TalentShowcase.Api.Repositories.Interfaces;
+using TalentShowcase.Api.Services.Interfaces;
+
+namespace TalentShowcase.Api.Services.Implementations
+{
+    public class FollowService : IFollowService
+    {
+        private const int MaxPageSize = 10;
+
+        private readonly IFollowRepository _followRepo;
+        private readonly IUserRepository _userRepo;
+
+        public FollowService(IFollowRepository followRepo, IUserRepository userRepo)
+        {
+            _followRepo = followRepo;
+            _userRepo = userRepo;
+        }
+
+        public async Task<Result<object>> ToggleFollowAsync(int followerId, int followingId)
+        {
+            if (followerId == followingId)
+                return new Result<object> { IsSuccess = false, Message = "You cannot follow yourself.", StatusCode = 400 };
+
+            var target = await _userRepo.GetPublicByIdAsync(followingId);
+            if (target == null)
+                return new Result<object> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
+
+            var existing = await _followRepo.GetAsync(followerId, followingId);
+            if (existing != null)
+            {
+                _followRepo.Remove(existing);
+                await _followRepo.SaveChangesAsync();
+                return new Result<object> { IsSuccess = true, Message = "Unfollowed.", StatusCode = 200 };
+            }
+
+            await _followRepo.AddAsync(new Follow { FollowerId = followerId, FollowingId = followingId });
+            await _followRepo.SaveChangesAsync();
+            return new Result<object> { IsSuccess = true, Message = "Followed.", StatusCode = 200 };
+        }
+
+        public async Task<Result<FollowListDto>> GetFollowersAsync(int userId, int page, int pageSize)
+        {
+            var user = await _userRepo.GetPublicByIdAsync(userId);
+            if (user == null)
+                return new Result<FollowListDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
+
+            if (page < 1)
+                return new Result<FollowListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<FollowListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _followRepo.CountFollowersAsync(userId);
+            var follows = await _followRepo.GetFollowersAsync(userId, page, pageSize);
+
+            var result = new FollowListDto
+            {
+                Users = follows.Select(f => ToDto(f.Follower)),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<FollowListDto> { Data = result, IsSuccess = true, Message = "Followers retrieved successfully.", StatusCode = 200 };
+        }
+
+        public async Task<Result<FollowListDto>> GetFollowingAsync(int userId, int page, int pageSize)
+        {
+            var user = await _userRepo.GetPublicByIdAsync(userId);
+            if (user == null)
+                return new Result<FollowListDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
+
+            if (page < 1)
+                return new Result<FollowListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<FollowListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _followRepo.CountFollowingAsync(userId);
+            var follows = await _followRepo.GetFollowingAsync(userId, page, pageSize);
+
+            var result = new FollowListDto
+            {
+                Users = follows.Select(f => ToDto(f.Following)),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<FollowListDto> { Data = result, IsSuccess = true, Message = "Following retrieved successfully.", StatusCode = 200 };
+        }
+
+        private static FollowUserDto ToDto(User user) => new FollowUserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            ProfileImageUrl = user.Profile?.ProfileImageUrl,
+            PrimaryCategory = user.Profile?.PrimaryCategory,
+            SkillLevel = user.Profile?.SkillLevel
+        };
+    }
+}

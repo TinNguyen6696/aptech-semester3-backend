@@ -15,12 +15,14 @@ namespace TalentShowcase.Api.Controllers
         private readonly IUserService _userService;
         private readonly IFileUploadService _fileUploadService;
         private readonly IVideoService _videoService;
+        private readonly IFollowService _followService;
 
-        public UsersController(IUserService userService, IFileUploadService fileUploadService, IVideoService videoService)
+        public UsersController(IUserService userService, IFileUploadService fileUploadService, IVideoService videoService, IFollowService followService)
         {
             _userService = userService;
             _fileUploadService = fileUploadService;
             _videoService = videoService;
+            _followService = followService;
         }
 
         [HttpGet("me")]
@@ -34,7 +36,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetPublicProfile(int id)
         {
-            var result = await _userService.GetPublicProfileAsync(id);
+            var result = await _userService.GetPublicProfileAsync(id, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 
@@ -43,6 +45,30 @@ namespace TalentShowcase.Api.Controllers
         public async Task<IActionResult> GetUserPublicVideos(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
             var result = await _videoService.GetPublicVideosByUserAsync(id, page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("{id:int}/follow")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
+        public async Task<IActionResult> ToggleFollow(int id)
+        {
+            var result = await _followService.ToggleFollowAsync(CurrentUserId, id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id:int}/followers")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetFollowers(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _followService.GetFollowersAsync(id, page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id:int}/following")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetFollowing(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _followService.GetFollowingAsync(id, page, pageSize);
             return StatusCode(result.StatusCode, result);
         }
 

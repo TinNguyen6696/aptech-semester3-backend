@@ -21,6 +21,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<Comment> Comments => Set<Comment>();
         public DbSet<Rating> Ratings => Set<Rating>();
         public DbSet<VideoView> VideoViews => Set<VideoView>();
+        public DbSet<Follow> Follows => Set<Follow>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
