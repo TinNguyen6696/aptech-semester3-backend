@@ -17,6 +17,10 @@ namespace TalentShowcase.Api.Data
         public DbSet<JwtDenylist> JwtDenylists => Set<JwtDenylist>();
         public DbSet<Achievement> Achievements => Set<Achievement>();
         public DbSet<Video> Videos => Set<Video>();
+        public DbSet<Like> Likes => Set<Like>();
+        public DbSet<Comment> Comments => Set<Comment>();
+        public DbSet<Rating> Ratings => Set<Rating>();
+        public DbSet<VideoView> VideoViews => Set<VideoView>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -20,7 +20,7 @@ namespace TalentShowcase.Api.Data.Configurations
                 .HasMaxLength(128);
 
             builder.HasIndex(t => t.TokenHash);
-            builder.HasIndex(t => t.UserId);
+            builder.HasIndex(t => new { t.UserId, t.TokenType });
 
             builder.HasOne(t => t.User)
                 .WithMany(u => u.UserTokens)

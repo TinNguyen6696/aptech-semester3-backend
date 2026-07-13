@@ -10,6 +10,15 @@ namespace TalentShowcase.Api.Controllers
         protected int CurrentUserId =>
             int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        protected int? CurrentUserIdOrNull
+        {
+            get
+            {
+                var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                return value == null ? null : int.Parse(value);
+            }
+        }
+
         protected string CurrentUserRole =>
             User.FindFirstValue(ClaimTypes.Role)!;
 

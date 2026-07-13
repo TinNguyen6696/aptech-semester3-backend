@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TalentShowcase.Api.Data;
+using TalentShowcase.Api.Models.Constants;
 using TalentShowcase.Api.Models.Entities;
 using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Repositories.Interfaces;
@@ -18,12 +19,22 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountByUserIdAsync(int userId) =>
             await _dbSet.CountAsync(v => v.UserId == userId);
 
-        public async Task<IEnumerable<Video>> GetPublicAsync(TalentCategory? category, int page, int pageSize) =>
-            await PublicQuery(category)
-                .OrderByDescending(v => v.CreatedAt)
+        public async Task<IEnumerable<Video>> GetPublicAsync(TalentCategory? category, VideoSortBy sortBy, int page, int pageSize)
+        {
+            var query = PublicQuery(category);
+
+            query = sortBy switch
+            {
+                VideoSortBy.MostLiked => query.OrderByDescending(v =>
+                    _context.Likes.Count(l => l.ReferenceType == ReferenceTypes.Video && l.ReferenceId == v.Id)),
+                _ => query.OrderByDescending(v => v.CreatedAt)
+            };
+
+            return await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+        }
 
         public async Task<int> CountPublicAsync(TalentCategory? category) =>
             await PublicQuery(category).CountAsync();
