@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TalentShowcase.Api.Data.Seeders;
 using TalentShowcase.Api.Models.Entities;
 
 namespace TalentShowcase.Api.Data.Configurations
@@ -47,6 +48,8 @@ namespace TalentShowcase.Api.Data.Configurations
                 .WithMany()
                 .HasForeignKey(p => p.ProvinceId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasData(AdminSeeder.GetProfile());
         }
     }
 }

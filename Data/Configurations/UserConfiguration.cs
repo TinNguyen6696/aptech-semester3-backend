@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TalentShowcase.Api.Data.Seeders;
 using TalentShowcase.Api.Models.Entities;
 
 namespace TalentShowcase.Api.Data.Configurations
@@ -33,6 +34,8 @@ namespace TalentShowcase.Api.Data.Configurations
 
             builder.HasIndex(u => u.Username).IsUnique();
             builder.HasIndex(u => u.Email).IsUnique();
+
+            builder.HasData(AdminSeeder.GetUser());
         }
     }
 }
