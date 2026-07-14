@@ -32,5 +32,11 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Include(u => u.Profile)
                 .ThenInclude(p => p!.Province)
                 .FirstOrDefaultAsync(u => u.Id == id && u.IsActive);
+
+        public async Task<Dictionary<int, User>> GetByIdsWithProfileAsync(IEnumerable<int> ids) =>
+            await _dbSet
+                .Include(u => u.Profile)
+                .Where(u => ids.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u);
     }
 }

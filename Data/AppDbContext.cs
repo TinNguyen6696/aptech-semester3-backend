@@ -25,6 +25,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<Community> Communities => Set<Community>();
         public DbSet<CommunityPost> CommunityPosts => Set<CommunityPost>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<Message> Messages => Set<Message>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

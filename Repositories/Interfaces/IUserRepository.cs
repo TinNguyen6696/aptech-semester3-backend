@@ -10,5 +10,6 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<bool> ExistsByUsernameAsync(string username, int excludeUserId);
         Task<User?> GetByIdWithProfileAsync(int id);
         Task<User?> GetPublicByIdAsync(int id);
+        Task<Dictionary<int, User>> GetByIdsWithProfileAsync(IEnumerable<int> ids);
     }
 }
