@@ -11,12 +11,21 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ILikeRepository _likeRepo;
         private readonly IVideoRepository _videoRepo;
         private readonly ICommunityPostRepository _communityPostRepo;
+        private readonly IUserRepository _userRepo;
+        private readonly INotificationService _notificationService;
 
-        public LikeService(ILikeRepository likeRepo, IVideoRepository videoRepo, ICommunityPostRepository communityPostRepo)
+        public LikeService(
+            ILikeRepository likeRepo,
+            IVideoRepository videoRepo,
+            ICommunityPostRepository communityPostRepo,
+            IUserRepository userRepo,
+            INotificationService notificationService)
         {
             _likeRepo = likeRepo;
             _videoRepo = videoRepo;
             _communityPostRepo = communityPostRepo;
+            _userRepo = userRepo;
+            _notificationService = notificationService;
         }
 
         public async Task<Result<object>> ToggleVideoLikeAsync(int userId, int videoId)
@@ -25,7 +34,12 @@ namespace TalentShowcase.Api.Services.Implementations
             if (video == null)
                 return new Result<object> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
-            return await ToggleAsync(userId, ReferenceTypes.Video, videoId);
+            var (result, liked) = await ToggleAsync(userId, ReferenceTypes.Video, videoId);
+
+            if (liked && video.UserId != userId)
+                await NotifyAsync(video.UserId, userId, "liked your video", ReferenceTypes.Video, videoId);
+
+            return result;
         }
 
         public async Task<Result<object>> ToggleCommunityPostLikeAsync(int userId, int postId)
@@ -34,22 +48,36 @@ namespace TalentShowcase.Api.Services.Implementations
             if (post == null)
                 return new Result<object> { IsSuccess = false, Message = "Post not found.", StatusCode = 404 };
 
-            return await ToggleAsync(userId, ReferenceTypes.CommunityPost, postId);
+            var (result, liked) = await ToggleAsync(userId, ReferenceTypes.CommunityPost, postId);
+
+            if (liked && post.UserId != userId)
+                await NotifyAsync(post.UserId, userId, "liked your post", ReferenceTypes.CommunityPost, postId);
+
+            return result;
         }
 
-        private async Task<Result<object>> ToggleAsync(int userId, string referenceType, int referenceId)
+        private async Task<(Result<object> Result, bool Liked)> ToggleAsync(int userId, string referenceType, int referenceId)
         {
             var existing = await _likeRepo.GetAsync(referenceType, referenceId, userId);
             if (existing != null)
             {
                 _likeRepo.Remove(existing);
                 await _likeRepo.SaveChangesAsync();
-                return new Result<object> { IsSuccess = true, Message = "Unliked.", StatusCode = 200 };
+                return (new Result<object> { IsSuccess = true, Message = "Unliked.", StatusCode = 200 }, false);
             }
 
             await _likeRepo.AddAsync(new Like { UserId = userId, ReferenceType = referenceType, ReferenceId = referenceId });
             await _likeRepo.SaveChangesAsync();
-            return new Result<object> { IsSuccess = true, Message = "Liked.", StatusCode = 200 };
+            return (new Result<object> { IsSuccess = true, Message = "Liked.", StatusCode = 200 }, true);
+        }
+
+        private async Task NotifyAsync(int recipientUserId, int actorUserId, string action, string referenceType, int referenceId)
+        {
+            var actor = await _userRepo.GetByIdAsync(actorUserId);
+            if (actor == null)
+                return;
+
+            await _notificationService.CreateAsync(recipientUserId, $"{actor.Username} {action}.", referenceType, referenceId);
         }
     }
 }

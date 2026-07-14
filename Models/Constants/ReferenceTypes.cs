@@ -4,5 +4,6 @@ namespace TalentShowcase.Api.Models.Constants
     {
         public const string Video = "video";
         public const string CommunityPost = "community_post";
+        public const string User = "user";
     }
 }

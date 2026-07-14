@@ -35,6 +35,7 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<IVideoViewRepository, VideoViewRepository>();
             services.AddScoped<IFollowRepository, FollowRepository>();
             services.AddScoped<ICommunityPostRepository, CommunityPostRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
 
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IAuthService, AuthService>();
@@ -48,6 +49,7 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<IVideoViewService, VideoViewService>();
             services.AddScoped<IFollowService, FollowService>();
             services.AddScoped<ICommunityService, CommunityService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             return services;
         }

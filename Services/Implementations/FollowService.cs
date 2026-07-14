@@ -1,5 +1,6 @@
 using TalentShowcase.Api.Common;
 using TalentShowcase.Api.DTOs.Follows;
+using TalentShowcase.Api.Models.Constants;
 using TalentShowcase.Api.Models.Entities;
 using TalentShowcase.Api.Repositories.Interfaces;
 using TalentShowcase.Api.Services.Interfaces;
@@ -12,11 +13,13 @@ namespace TalentShowcase.Api.Services.Implementations
 
         private readonly IFollowRepository _followRepo;
         private readonly IUserRepository _userRepo;
+        private readonly INotificationService _notificationService;
 
-        public FollowService(IFollowRepository followRepo, IUserRepository userRepo)
+        public FollowService(IFollowRepository followRepo, IUserRepository userRepo, INotificationService notificationService)
         {
             _followRepo = followRepo;
             _userRepo = userRepo;
+            _notificationService = notificationService;
         }
 
         public async Task<Result<object>> ToggleFollowAsync(int followerId, int followingId)
@@ -38,6 +41,11 @@ namespace TalentShowcase.Api.Services.Implementations
 
             await _followRepo.AddAsync(new Follow { FollowerId = followerId, FollowingId = followingId });
             await _followRepo.SaveChangesAsync();
+
+            var follower = await _userRepo.GetByIdAsync(followerId);
+            if (follower != null)
+                await _notificationService.CreateAsync(followingId, $"{follower.Username} followed you.", ReferenceTypes.User, followerId);
+
             return new Result<object> { IsSuccess = true, Message = "Followed.", StatusCode = 200 };
         }
 
