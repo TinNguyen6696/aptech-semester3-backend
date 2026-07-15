@@ -55,6 +55,22 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountPublicByUserIdAsync(int userId) =>
             await PublicByUserQuery(userId).CountAsync();
 
+        // Admin-only: every video regardless of Visibility, for moderation.
+        public async Task<IEnumerable<Video>> GetAllPagedAsync(int page, int pageSize) =>
+            await _dbSet
+                .Include(v => v.User)
+                    .ThenInclude(u => u.Profile)
+                .OrderByDescending(v => v.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountAllAsync() =>
+            await _dbSet.CountAsync();
+
+        public async Task<int> CountCreatedSinceAsync(DateTime since) =>
+            await _dbSet.CountAsync(v => v.CreatedAt >= since);
+
         private IQueryable<Video> PublicByUserQuery(int userId) =>
             _dbSet
                 .Include(v => v.User)

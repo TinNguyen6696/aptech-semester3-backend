@@ -12,5 +12,8 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<IEnumerable<Video>> GetPublicByUserIdAsync(int userId, int page, int pageSize);
         Task<int> CountPublicByUserIdAsync(int userId);
         Task<Video?> GetPublicByIdAsync(int id);
+        Task<IEnumerable<Video>> GetAllPagedAsync(int page, int pageSize);
+        Task<int> CountAllAsync();
+        Task<int> CountCreatedSinceAsync(DateTime since);
     }
 }

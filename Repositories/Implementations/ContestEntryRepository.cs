@@ -23,13 +23,17 @@ namespace TalentShowcase.Api.Repositories.Implementations
                         .ThenInclude(u => u.Profile)
                 .FirstOrDefaultAsync(e => e.Id == entryId);
 
+        // Ordered by vote count descending (the leaderboard) at the DB level, BEFORE pagination —
+        // sorting after Skip/Take would only rank within a page and put the real winner on page 2.
+        // CreatedAt is the tie-breaker so equal-vote entries have a stable order.
         public async Task<IEnumerable<ContestEntry>> GetByContestIdAsync(int contestId, int page, int pageSize) =>
             await _dbSet
                 .Include(e => e.Video)
                     .ThenInclude(v => v.User)
                         .ThenInclude(u => u.Profile)
                 .Where(e => e.ContestId == contestId)
-                .OrderByDescending(e => e.CreatedAt)
+                .OrderByDescending(e => _context.ContestVotes.Count(cv => cv.ContestEntryId == e.Id))
+                .ThenByDescending(e => e.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

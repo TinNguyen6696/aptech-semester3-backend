@@ -58,6 +58,7 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<IMessageService, MessageService>();
             services.AddScoped<IOpportunityService, OpportunityService>();
             services.AddScoped<IContestService, ContestService>();
+            services.AddScoped<IAdminService, AdminService>();
 
             return services;
         }

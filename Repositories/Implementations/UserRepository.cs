@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TalentShowcase.Api.Data;
 using TalentShowcase.Api.Models.Entities;
+using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Repositories.Interfaces;
 
 namespace TalentShowcase.Api.Repositories.Implementations
@@ -38,5 +39,34 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Include(u => u.Profile)
                 .Where(u => ids.Contains(u.Id))
                 .ToDictionaryAsync(u => u.Id, u => u);
+
+        public async Task<IEnumerable<User>> GetAllPagedAsync(UserRole? role, int page, int pageSize) =>
+            await RoleQuery(role)
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountAllAsync(UserRole? role) =>
+            await RoleQuery(role).CountAsync();
+
+        public async Task<Dictionary<UserRole, int>> CountByRoleAsync() =>
+            await _dbSet
+                .GroupBy(u => u.Role)
+                .Select(g => new { Role = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Role, x => x.Count);
+
+        public async Task<int> CountCreatedSinceAsync(DateTime since) =>
+            await _dbSet.CountAsync(u => u.CreatedAt >= since);
+
+        private IQueryable<User> RoleQuery(UserRole? role)
+        {
+            var query = _dbSet.Include(u => u.Profile).AsQueryable();
+
+            if (role.HasValue)
+                query = query.Where(u => u.Role == role.Value);
+
+            return query;
+        }
     }
 }

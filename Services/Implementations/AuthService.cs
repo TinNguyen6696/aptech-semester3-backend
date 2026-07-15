@@ -98,6 +98,9 @@ namespace TalentShowcase.Api.Services.Implementations
             if (!user.EmailConfirmed)
                 return new Result<AuthResponse> { IsSuccess = false, Message = "Please verify your email before logging in.", StatusCode = 403 };
 
+            if (!user.IsActive)
+                return new Result<AuthResponse> { IsSuccess = false, Message = "Your account has been deactivated.", StatusCode = 403 };
+
             var fullUser = await _userRepo.GetByIdWithProfileAsync(user.Id);
             return await IssueTokensAsync(fullUser!, "Login successful.");
         }

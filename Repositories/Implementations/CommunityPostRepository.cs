@@ -34,5 +34,8 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .GroupBy(p => p.CommunityId)
                 .Select(g => new { CommunityId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.CommunityId, x => x.Count);
+
+        public async Task<int> CountAllAsync() =>
+            await _dbSet.CountAsync();
     }
 }

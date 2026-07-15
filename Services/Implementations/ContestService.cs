@@ -143,11 +143,10 @@ namespace TalentShowcase.Api.Services.Implementations
             var entries = (await _entryRepo.GetByContestIdAsync(contestId, page, pageSize)).ToList();
             var voteCounts = await _voteRepo.CountByEntryIdsAsync(entries.Select(e => e.Id));
 
+            // Entries already arrive ranked by vote count from the repository (DB-level, pre-pagination).
             var result = new ContestEntryListDto
             {
-                Entries = entries
-                    .Select(e => ToDto(e, voteCounts.GetValueOrDefault(e.Id)))
-                    .OrderByDescending(e => e.VoteCount),
+                Entries = entries.Select(e => ToDto(e, voteCounts.GetValueOrDefault(e.Id))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,

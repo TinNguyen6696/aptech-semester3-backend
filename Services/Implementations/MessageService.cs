@@ -44,7 +44,10 @@ namespace TalentShowcase.Api.Services.Implementations
 
         public async Task<Result<MessageListDto>> GetConversationAsync(int userId, int otherUserId, int page, int pageSize)
         {
-            var other = await _userRepo.GetPublicByIdAsync(otherUserId);
+            // Existence only (not GetPublicByIdAsync): chat history stays viewable even if the
+            // other user is later deactivated — it's the current user's own data. Sending to a
+            // deactivated user is still blocked separately in SendMessageAsync.
+            var other = await _userRepo.GetByIdAsync(otherUserId);
             if (other == null)
                 return new Result<MessageListDto> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
 
@@ -114,7 +117,9 @@ namespace TalentShowcase.Api.Services.Implementations
 
         public async Task<Result<object>> MarkConversationAsReadAsync(int userId, int otherUserId)
         {
-            var other = await _userRepo.GetPublicByIdAsync(otherUserId);
+            // Existence only, same reasoning as GetConversationAsync — you can clear unread
+            // markers on history with a deactivated partner.
+            var other = await _userRepo.GetByIdAsync(otherUserId);
             if (other == null)
                 return new Result<object> { IsSuccess = false, Message = "User not found.", StatusCode = 404 };
 

@@ -37,6 +37,19 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Where(c => c.ReferenceType == referenceType && c.ReferenceId == referenceId)
                 .ExecuteDeleteAsync();
 
+        // Admin-only: every comment across every reference type, for moderation.
+        public async Task<IEnumerable<Comment>> GetAllPagedAsync(int page, int pageSize) =>
+            await _dbSet
+                .Include(c => c.User)
+                    .ThenInclude(u => u.Profile)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountAllAsync() =>
+            await _dbSet.CountAsync();
+
         private IQueryable<Comment> ReferenceQuery(string referenceType, int referenceId) =>
             _dbSet
                 .Include(c => c.User)

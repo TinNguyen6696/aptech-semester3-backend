@@ -1,4 +1,5 @@
 using TalentShowcase.Api.Models.Entities;
+using TalentShowcase.Api.Models.Enums;
 
 namespace TalentShowcase.Api.Repositories.Interfaces
 {
@@ -11,5 +12,9 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<User?> GetByIdWithProfileAsync(int id);
         Task<User?> GetPublicByIdAsync(int id);
         Task<Dictionary<int, User>> GetByIdsWithProfileAsync(IEnumerable<int> ids);
+        Task<IEnumerable<User>> GetAllPagedAsync(UserRole? role, int page, int pageSize);
+        Task<int> CountAllAsync(UserRole? role);
+        Task<Dictionary<UserRole, int>> CountByRoleAsync();
+        Task<int> CountCreatedSinceAsync(DateTime since);
     }
 }

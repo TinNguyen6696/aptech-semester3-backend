@@ -8,5 +8,6 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<int> CountByCommunityIdAsync(int communityId);
         Task<CommunityPost?> GetByIdWithUserAsync(int id);
         Task<Dictionary<int, int>> CountByCommunityIdsAsync(IEnumerable<int> communityIds);
+        Task<int> CountAllAsync();
     }
 }
