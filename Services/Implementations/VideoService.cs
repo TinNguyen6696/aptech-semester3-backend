@@ -20,6 +20,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ICommentRepository _commentRepo;
         private readonly IRatingRepository _ratingRepo;
         private readonly IVideoViewRepository _videoViewRepo;
+        private readonly IContestEntryRepository _contestEntryRepo;
         private readonly AppDbContext _context;
 
         public VideoService(
@@ -29,6 +30,7 @@ namespace TalentShowcase.Api.Services.Implementations
             ICommentRepository commentRepo,
             IRatingRepository ratingRepo,
             IVideoViewRepository videoViewRepo,
+            IContestEntryRepository contestEntryRepo,
             AppDbContext context)
         {
             _videoRepo = videoRepo;
@@ -37,6 +39,7 @@ namespace TalentShowcase.Api.Services.Implementations
             _commentRepo = commentRepo;
             _ratingRepo = ratingRepo;
             _videoViewRepo = videoViewRepo;
+            _contestEntryRepo = contestEntryRepo;
             _context = context;
         }
 
@@ -88,6 +91,9 @@ namespace TalentShowcase.Api.Services.Implementations
             if (video == null || video.UserId != userId)
                 return new Result<VideoDto> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
+            if (await _contestEntryRepo.ExistsForVideoAsync(videoId))
+                return new Result<VideoDto> { IsSuccess = false, Message = "This video has been entered into a contest and can no longer be edited.", StatusCode = 400 };
+
             if (!Enum.IsDefined(request.Category!.Value))
                 return new Result<VideoDto> { IsSuccess = false, Message = "Invalid category.", StatusCode = 400 };
 
@@ -112,6 +118,9 @@ namespace TalentShowcase.Api.Services.Implementations
 
             if (video == null || video.UserId != userId)
                 return new Result<object> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
+
+            if (await _contestEntryRepo.ExistsForVideoAsync(videoId))
+                return new Result<object> { IsSuccess = false, Message = "This video has been entered into a contest and can no longer be deleted.", StatusCode = 400 };
 
             // Likes/Comments are polymorphic (no DB-level FK to Video), so they're cleaned up here
             // in a transaction alongside the video row. Ratings/VideoViews have a real FK to Video
