@@ -1,0 +1,60 @@
+using Microsoft.EntityFrameworkCore;
+using TalentShowcase.Api.Data;
+using TalentShowcase.Api.Models.Entities;
+using TalentShowcase.Api.Models.Enums;
+using TalentShowcase.Api.Repositories.Interfaces;
+
+namespace TalentShowcase.Api.Repositories.Implementations
+{
+    public class OpportunityRepository : GenericRepository<Opportunity>, IOpportunityRepository
+    {
+        public OpportunityRepository(AppDbContext context) : base(context) { }
+
+        public async Task<IEnumerable<Opportunity>> GetPublicAsync(TalentCategory? category, int? provinceId, int page, int pageSize) =>
+            await Query(category, provinceId, null)
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountPublicAsync(TalentCategory? category, int? provinceId) =>
+            await Query(category, provinceId, null).CountAsync();
+
+        public async Task<Opportunity?> GetByIdWithDetailsAsync(int id) =>
+            await _dbSet
+                .Include(o => o.PostedByUser)
+                    .ThenInclude(u => u.Profile)
+                .Include(o => o.Province)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+        public async Task<IEnumerable<Opportunity>> GetByUserIdAsync(int userId, int page, int pageSize) =>
+            await Query(null, null, userId)
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountByUserIdAsync(int userId) =>
+            await Query(null, null, userId).CountAsync();
+
+        private IQueryable<Opportunity> Query(TalentCategory? category, int? provinceId, int? postedByUserId)
+        {
+            var query = _dbSet
+                .Include(o => o.PostedByUser)
+                    .ThenInclude(u => u.Profile)
+                .Include(o => o.Province)
+                .AsQueryable();
+
+            if (category.HasValue)
+                query = query.Where(o => o.Category == category.Value);
+
+            if (provinceId.HasValue)
+                query = query.Where(o => o.ProvinceId == provinceId.Value);
+
+            if (postedByUserId.HasValue)
+                query = query.Where(o => o.PostedByUserId == postedByUserId.Value);
+
+            return query;
+        }
+    }
+}

@@ -37,6 +37,7 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<ICommunityPostRepository, CommunityPostRepository>();
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IMessageRepository, MessageRepository>();
+            services.AddScoped<IOpportunityRepository, OpportunityRepository>();
 
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IAuthService, AuthService>();
@@ -52,6 +53,7 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<ICommunityService, CommunityService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IMessageService, MessageService>();
+            services.AddScoped<IOpportunityService, OpportunityService>();
 
             return services;
         }
