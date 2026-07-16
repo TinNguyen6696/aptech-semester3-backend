@@ -112,13 +112,16 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<VideoDto> { Data = ToDto(video, stats), IsSuccess = true, Message = "Video updated successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<object>> DeleteVideoAsync(int userId, int videoId)
+        public async Task<Result<object>> DeleteVideoAsync(int userId, int videoId, bool isAdmin)
         {
             var video = await _videoRepo.GetByIdAsync(videoId);
 
-            if (video == null || video.UserId != userId)
+            if (video == null || (video.UserId != userId && !isAdmin))
                 return new Result<object> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
+            // No bypass for Admin here either — the contest lock is a single, permanent rule.
+            // If a reported video is also in a contest, Admin must remove the contest entry via
+            // DELETE /api/contests/{id}/entries/{entryId} first, then delete the video normally.
             if (await _contestEntryRepo.ExistsForVideoAsync(videoId))
                 return new Result<object> { IsSuccess = false, Message = "This video has been entered into a contest and can no longer be deleted.", StatusCode = 400 };
 

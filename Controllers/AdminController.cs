@@ -14,11 +14,13 @@ namespace TalentShowcase.Api.Controllers
 
         private readonly IAdminService _adminService;
         private readonly IReportService _reportService;
+        private readonly IVideoService _videoService;
 
-        public AdminController(IAdminService adminService, IReportService reportService)
+        public AdminController(IAdminService adminService, IReportService reportService, IVideoService videoService)
         {
             _adminService = adminService;
             _reportService = reportService;
+            _videoService = videoService;
         }
 
         [HttpGet("dashboard")]
@@ -53,6 +55,13 @@ namespace TalentShowcase.Api.Controllers
         public async Task<IActionResult> GetVideos([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
             var result = await _adminService.GetVideosAsync(page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("videos/{id:int}")]
+        public async Task<IActionResult> DeleteVideo(int id)
+        {
+            var result = await _videoService.DeleteVideoAsync(CurrentUserId, id, isAdmin: true);
             return StatusCode(result.StatusCode, result);
         }
 

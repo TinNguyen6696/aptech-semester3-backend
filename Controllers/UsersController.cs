@@ -152,7 +152,7 @@ namespace TalentShowcase.Api.Controllers
         [Authorize(Roles = "Member")]
         public async Task<IActionResult> DeleteVideo(int id)
         {
-            var result = await _videoService.DeleteVideoAsync(CurrentUserId, id);
+            var result = await _videoService.DeleteVideoAsync(CurrentUserId, id, isAdmin: false);
             return StatusCode(result.StatusCode, result);
         }
     }
