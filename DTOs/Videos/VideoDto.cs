@@ -13,6 +13,7 @@ namespace TalentShowcase.Api.DTOs.Videos
         public VideoVisibility Visibility { get; set; }
         public int ViewCount { get; set; }
         public int LikeCount { get; set; }
+        public bool? IsLiked { get; set; }
         public int CommentCount { get; set; }
         public double? AverageRating { get; set; }
         public DateTime CreatedAt { get; set; }

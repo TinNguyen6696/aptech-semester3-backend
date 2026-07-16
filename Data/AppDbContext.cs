@@ -30,6 +30,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<Contest> Contests => Set<Contest>();
         public DbSet<ContestEntry> ContestEntries => Set<ContestEntry>();
         public DbSet<ContestVote> ContestVotes => Set<ContestVote>();
+        public DbSet<Report> Reports => Set<Report>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -6,5 +6,6 @@ namespace TalentShowcase.Api.Services.Interfaces
     {
         Task<Result<object>> ToggleVideoLikeAsync(int userId, int videoId);
         Task<Result<object>> ToggleCommunityPostLikeAsync(int userId, int postId);
+        Task<Result<object>> ToggleCommentLikeAsync(int userId, int commentId);
     }
 }

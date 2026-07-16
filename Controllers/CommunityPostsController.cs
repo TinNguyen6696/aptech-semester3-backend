@@ -52,7 +52,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetComments(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _commentService.GetCommunityPostCommentsAsync(id, page, pageSize);
+            var result = await _commentService.GetCommunityPostCommentsAsync(id, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

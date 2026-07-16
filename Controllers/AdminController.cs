@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TalentShowcase.Api.DTOs.Reports;
 using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Services.Interfaces;
 
@@ -12,10 +13,12 @@ namespace TalentShowcase.Api.Controllers
         private const int DefaultPageSize = 10;
 
         private readonly IAdminService _adminService;
+        private readonly IReportService _reportService;
 
-        public AdminController(IAdminService adminService)
+        public AdminController(IAdminService adminService, IReportService reportService)
         {
             _adminService = adminService;
+            _reportService = reportService;
         }
 
         [HttpGet("dashboard")]
@@ -57,6 +60,27 @@ namespace TalentShowcase.Api.Controllers
         public async Task<IActionResult> GetComments([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
             var result = await _adminService.GetCommentsAsync(page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("reports")]
+        public async Task<IActionResult> GetReports([FromQuery] ReportStatus? status, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _reportService.GetReportsAsync(status, page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("reports/{id:int}")]
+        public async Task<IActionResult> GetReport(int id)
+        {
+            var result = await _reportService.GetReportByIdAsync(id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPut("reports/{id:int}/status")]
+        public async Task<IActionResult> UpdateReportStatus(int id, [FromBody] UpdateReportStatusRequest request)
+        {
+            var result = await _reportService.UpdateReportStatusAsync(CurrentUserId, id, request);
             return StatusCode(result.StatusCode, result);
         }
     }

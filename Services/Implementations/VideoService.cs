@@ -46,7 +46,7 @@ namespace TalentShowcase.Api.Services.Implementations
         public async Task<Result<IEnumerable<VideoDto>>> GetMyVideosAsync(int userId)
         {
             var videos = (await _videoRepo.GetByUserIdAsync(userId)).ToList();
-            var stats = await GetStatsBatchAsync(videos.Select(v => v.Id));
+            var stats = await GetStatsBatchAsync(videos.Select(v => v.Id), userId);
             var dtos = videos.OrderByDescending(v => v.CreatedAt).Select(v => ToDto(v, stats[v.Id]));
 
             return new Result<IEnumerable<VideoDto>> { Data = dtos, IsSuccess = true, Message = "Videos retrieved successfully.", StatusCode = 200 };
@@ -81,7 +81,7 @@ namespace TalentShowcase.Api.Services.Implementations
             await _videoRepo.AddAsync(video);
             await _videoRepo.SaveChangesAsync();
 
-            return new Result<VideoDto> { Data = ToDto(video, VideoStats.Empty), IsSuccess = true, Message = "Video added successfully.", StatusCode = 201 };
+            return new Result<VideoDto> { Data = ToDto(video, VideoStats.Empty with { IsLiked = false }), IsSuccess = true, Message = "Video added successfully.", StatusCode = 201 };
         }
 
         public async Task<Result<VideoDto>> UpdateVideoAsync(int userId, int videoId, UpdateVideoRequest request)
@@ -108,7 +108,7 @@ namespace TalentShowcase.Api.Services.Implementations
             _videoRepo.Update(video);
             await _videoRepo.SaveChangesAsync();
 
-            var stats = await GetStatsAsync(videoId);
+            var stats = await GetStatsAsync(videoId, userId);
             return new Result<VideoDto> { Data = ToDto(video, stats), IsSuccess = true, Message = "Video updated successfully.", StatusCode = 200 };
         }
 
@@ -142,7 +142,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<object> { IsSuccess = true, Message = "Video deleted successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, VideoSortBy sortBy, int page, int pageSize)
+        public async Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, VideoSortBy sortBy, int page, int pageSize, int? currentUserId)
         {
             if (category.HasValue && !Enum.IsDefined(category.Value))
                 return new Result<PublicVideoListDto> { IsSuccess = false, Message = "Invalid category.", StatusCode = 400 };
@@ -155,7 +155,7 @@ namespace TalentShowcase.Api.Services.Implementations
 
             var totalCount = await _videoRepo.CountPublicAsync(category);
             var videos = (await _videoRepo.GetPublicAsync(category, sortBy, page, pageSize)).ToList();
-            var stats = await GetStatsBatchAsync(videos.Select(v => v.Id));
+            var stats = await GetStatsBatchAsync(videos.Select(v => v.Id), currentUserId);
 
             var result = new PublicVideoListDto
             {
@@ -169,7 +169,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<PublicVideoListDto> { Data = result, IsSuccess = true, Message = "Videos retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<PublicVideoListDto>> GetPublicVideosByUserAsync(int userId, int page, int pageSize)
+        public async Task<Result<PublicVideoListDto>> GetPublicVideosByUserAsync(int userId, int page, int pageSize, int? currentUserId)
         {
             if (page < 1)
                 return new Result<PublicVideoListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
@@ -179,7 +179,7 @@ namespace TalentShowcase.Api.Services.Implementations
 
             var totalCount = await _videoRepo.CountPublicByUserIdAsync(userId);
             var videos = (await _videoRepo.GetPublicByUserIdAsync(userId, page, pageSize)).ToList();
-            var stats = await GetStatsBatchAsync(videos.Select(v => v.Id));
+            var stats = await GetStatsBatchAsync(videos.Select(v => v.Id), currentUserId);
 
             var result = new PublicVideoListDto
             {
@@ -193,28 +193,32 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<PublicVideoListDto> { Data = result, IsSuccess = true, Message = "Videos retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<PublicVideoDto>> GetPublicVideoByIdAsync(int id)
+        public async Task<Result<PublicVideoDto>> GetPublicVideoByIdAsync(int id, int? currentUserId)
         {
             var video = await _videoRepo.GetPublicByIdAsync(id);
 
             if (video == null)
                 return new Result<PublicVideoDto> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
-            var stats = await GetStatsAsync(id);
+            var stats = await GetStatsAsync(id, currentUserId);
             return new Result<PublicVideoDto> { Data = ToPublicDto(video, stats), IsSuccess = true, Message = "Video retrieved successfully.", StatusCode = 200 };
         }
 
-        private async Task<VideoStats> GetStatsAsync(int videoId)
+        private async Task<VideoStats> GetStatsAsync(int videoId, int? currentUserId)
         {
             var viewCount = await _videoViewRepo.CountByVideoIdAsync(videoId);
             var likeCount = await _likeRepo.CountByReferenceAsync(ReferenceTypes.Video, videoId);
             var commentCount = await _commentRepo.CountByReferenceAsync(ReferenceTypes.Video, videoId);
             var averageRating = await _ratingRepo.GetAverageByVideoIdAsync(videoId);
 
-            return new VideoStats(viewCount, likeCount, commentCount, averageRating);
+            bool? isLiked = currentUserId.HasValue
+                ? (await _likeRepo.GetAsync(ReferenceTypes.Video, videoId, currentUserId.Value)) != null
+                : null;
+
+            return new VideoStats(viewCount, likeCount, commentCount, averageRating, isLiked);
         }
 
-        private async Task<Dictionary<int, VideoStats>> GetStatsBatchAsync(IEnumerable<int> videoIds)
+        private async Task<Dictionary<int, VideoStats>> GetStatsBatchAsync(IEnumerable<int> videoIds, int? currentUserId)
         {
             var ids = videoIds.ToList();
 
@@ -223,11 +227,16 @@ namespace TalentShowcase.Api.Services.Implementations
             var commentCounts = await _commentRepo.CountByReferenceIdsAsync(ReferenceTypes.Video, ids);
             var averageRatings = await _ratingRepo.GetAverageByVideoIdsAsync(ids);
 
+            var likedIds = currentUserId.HasValue
+                ? await _likeRepo.GetLikedReferenceIdsAsync(ReferenceTypes.Video, ids, currentUserId.Value)
+                : null;
+
             return ids.ToDictionary(id => id, id => new VideoStats(
                 viewCounts.GetValueOrDefault(id),
                 likeCounts.GetValueOrDefault(id),
                 commentCounts.GetValueOrDefault(id),
-                averageRatings.TryGetValue(id, out var avg) ? avg : null));
+                averageRatings.TryGetValue(id, out var avg) ? avg : null,
+                likedIds == null ? null : likedIds.Contains(id)));
         }
 
         private static VideoDto ToDto(Video video, VideoStats stats) => new VideoDto
@@ -241,6 +250,7 @@ namespace TalentShowcase.Api.Services.Implementations
             Visibility = video.Visibility,
             ViewCount = stats.ViewCount,
             LikeCount = stats.LikeCount,
+            IsLiked = stats.IsLiked,
             CommentCount = stats.CommentCount,
             AverageRating = stats.AverageRating,
             CreatedAt = video.CreatedAt
@@ -256,6 +266,7 @@ namespace TalentShowcase.Api.Services.Implementations
             ThumbnailUrl = video.ThumbnailUrl,
             ViewCount = stats.ViewCount,
             LikeCount = stats.LikeCount,
+            IsLiked = stats.IsLiked,
             CommentCount = stats.CommentCount,
             AverageRating = stats.AverageRating,
             CreatedAt = video.CreatedAt,
@@ -269,9 +280,9 @@ namespace TalentShowcase.Api.Services.Implementations
             }
         };
 
-        private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating)
+        private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating, bool? IsLiked)
         {
-            public static readonly VideoStats Empty = new(0, 0, 0, null);
+            public static readonly VideoStats Empty = new(0, 0, 0, null, null);
         }
     }
 }

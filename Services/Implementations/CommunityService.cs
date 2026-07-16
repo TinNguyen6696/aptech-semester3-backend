@@ -51,7 +51,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<CommunityDto> { Data = ToDto(community, postCount), IsSuccess = true, Message = "Community retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<CommunityPostListDto>> GetCommunityPostsAsync(int communityId, int page, int pageSize)
+        public async Task<Result<CommunityPostListDto>> GetCommunityPostsAsync(int communityId, int page, int pageSize, int? currentUserId)
         {
             var community = await _communityRepo.GetByIdAsync(communityId);
             if (community == null)
@@ -66,13 +66,20 @@ namespace TalentShowcase.Api.Services.Implementations
             var totalCount = await _postRepo.CountByCommunityIdAsync(communityId);
             var posts = (await _postRepo.GetByCommunityIdAsync(communityId, page, pageSize)).ToList();
 
-            var postIds = posts.Select(p => p.Id);
+            var postIds = posts.Select(p => p.Id).ToList();
             var likeCounts = await _likeRepo.CountByReferenceIdsAsync(ReferenceTypes.CommunityPost, postIds);
             var commentCounts = await _commentRepo.CountByReferenceIdsAsync(ReferenceTypes.CommunityPost, postIds);
+            var likedIds = currentUserId.HasValue
+                ? await _likeRepo.GetLikedReferenceIdsAsync(ReferenceTypes.CommunityPost, postIds, currentUserId.Value)
+                : null;
 
             var result = new CommunityPostListDto
             {
-                Posts = posts.Select(p => ToDto(p, likeCounts.GetValueOrDefault(p.Id), commentCounts.GetValueOrDefault(p.Id))),
+                Posts = posts.Select(p => ToDto(
+                    p,
+                    likeCounts.GetValueOrDefault(p.Id),
+                    commentCounts.GetValueOrDefault(p.Id),
+                    likedIds == null ? null : likedIds.Contains(p.Id))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -99,7 +106,7 @@ namespace TalentShowcase.Api.Services.Implementations
             await _postRepo.SaveChangesAsync();
 
             var created = await _postRepo.GetByIdWithUserAsync(post.Id);
-            return new Result<CommunityPostDto> { Data = ToDto(created!, 0, 0), IsSuccess = true, Message = "Post added successfully.", StatusCode = 201 };
+            return new Result<CommunityPostDto> { Data = ToDto(created!, 0, 0, false), IsSuccess = true, Message = "Post added successfully.", StatusCode = 201 };
         }
 
         public async Task<Result<CommunityPostDto>> UpdateCommunityPostAsync(int userId, int postId, UpdateCommunityPostRequest request)
@@ -114,8 +121,9 @@ namespace TalentShowcase.Api.Services.Implementations
 
             var likeCount = await _likeRepo.CountByReferenceAsync(ReferenceTypes.CommunityPost, postId);
             var commentCount = await _commentRepo.CountByReferenceAsync(ReferenceTypes.CommunityPost, postId);
+            var isLiked = (await _likeRepo.GetAsync(ReferenceTypes.CommunityPost, postId, userId)) != null;
 
-            return new Result<CommunityPostDto> { Data = ToDto(post, likeCount, commentCount), IsSuccess = true, Message = "Post updated successfully.", StatusCode = 200 };
+            return new Result<CommunityPostDto> { Data = ToDto(post, likeCount, commentCount, isLiked), IsSuccess = true, Message = "Post updated successfully.", StatusCode = 200 };
         }
 
         public async Task<Result<object>> DeleteCommunityPostAsync(int userId, int postId, bool isAdmin)
@@ -139,12 +147,13 @@ namespace TalentShowcase.Api.Services.Implementations
             PostCount = postCount
         };
 
-        private static CommunityPostDto ToDto(CommunityPost post, int likeCount, int commentCount) => new CommunityPostDto
+        private static CommunityPostDto ToDto(CommunityPost post, int likeCount, int commentCount, bool? isLiked) => new CommunityPostDto
         {
             Id = post.Id,
             CommunityId = post.CommunityId,
             Content = post.Content,
             LikeCount = likeCount,
+            IsLiked = isLiked,
             CommentCount = commentCount,
             CreatedAt = post.CreatedAt,
             UpdatedAt = post.UpdatedAt,

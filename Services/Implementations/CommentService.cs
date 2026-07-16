@@ -14,6 +14,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ICommentRepository _commentRepo;
         private readonly IVideoRepository _videoRepo;
         private readonly ICommunityPostRepository _communityPostRepo;
+        private readonly ILikeRepository _likeRepo;
         private readonly IUserRepository _userRepo;
         private readonly INotificationService _notificationService;
 
@@ -21,23 +22,25 @@ namespace TalentShowcase.Api.Services.Implementations
             ICommentRepository commentRepo,
             IVideoRepository videoRepo,
             ICommunityPostRepository communityPostRepo,
+            ILikeRepository likeRepo,
             IUserRepository userRepo,
             INotificationService notificationService)
         {
             _commentRepo = commentRepo;
             _videoRepo = videoRepo;
             _communityPostRepo = communityPostRepo;
+            _likeRepo = likeRepo;
             _userRepo = userRepo;
             _notificationService = notificationService;
         }
 
-        public async Task<Result<CommentListDto>> GetVideoCommentsAsync(int videoId, int page, int pageSize)
+        public async Task<Result<CommentListDto>> GetVideoCommentsAsync(int videoId, int page, int pageSize, int? currentUserId)
         {
             var video = await _videoRepo.GetByIdAsync(videoId);
             if (video == null)
                 return new Result<CommentListDto> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
-            return await GetCommentsAsync(ReferenceTypes.Video, videoId, page, pageSize);
+            return await GetCommentsAsync(ReferenceTypes.Video, videoId, page, pageSize, currentUserId);
         }
 
         public async Task<Result<CommentDto>> AddVideoCommentAsync(int userId, int videoId, CreateCommentRequest request)
@@ -54,13 +57,13 @@ namespace TalentShowcase.Api.Services.Implementations
             return result;
         }
 
-        public async Task<Result<CommentListDto>> GetCommunityPostCommentsAsync(int postId, int page, int pageSize)
+        public async Task<Result<CommentListDto>> GetCommunityPostCommentsAsync(int postId, int page, int pageSize, int? currentUserId)
         {
             var post = await _communityPostRepo.GetByIdAsync(postId);
             if (post == null)
                 return new Result<CommentListDto> { IsSuccess = false, Message = "Post not found.", StatusCode = 404 };
 
-            return await GetCommentsAsync(ReferenceTypes.CommunityPost, postId, page, pageSize);
+            return await GetCommentsAsync(ReferenceTypes.CommunityPost, postId, page, pageSize, currentUserId);
         }
 
         public async Task<Result<CommentDto>> AddCommunityPostCommentAsync(int userId, int postId, CreateCommentRequest request)
@@ -87,7 +90,10 @@ namespace TalentShowcase.Api.Services.Implementations
             _commentRepo.Update(comment);
             await _commentRepo.SaveChangesAsync();
 
-            return new Result<CommentDto> { Data = ToDto(comment), IsSuccess = true, Message = "Comment updated successfully.", StatusCode = 200 };
+            var likeCount = await _likeRepo.CountByReferenceAsync(ReferenceTypes.Comment, commentId);
+            var isLiked = (await _likeRepo.GetAsync(ReferenceTypes.Comment, commentId, userId)) != null;
+
+            return new Result<CommentDto> { Data = ToDto(comment, likeCount, isLiked), IsSuccess = true, Message = "Comment updated successfully.", StatusCode = 200 };
         }
 
         public async Task<Result<object>> DeleteCommentAsync(int userId, int commentId, bool isAdmin)
@@ -102,7 +108,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<object> { IsSuccess = true, Message = "Comment deleted successfully.", StatusCode = 200 };
         }
 
-        private async Task<Result<CommentListDto>> GetCommentsAsync(string referenceType, int referenceId, int page, int pageSize)
+        private async Task<Result<CommentListDto>> GetCommentsAsync(string referenceType, int referenceId, int page, int pageSize, int? currentUserId)
         {
             if (page < 1)
                 return new Result<CommentListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
@@ -111,11 +117,20 @@ namespace TalentShowcase.Api.Services.Implementations
                 return new Result<CommentListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
 
             var totalCount = await _commentRepo.CountByReferenceAsync(referenceType, referenceId);
-            var comments = await _commentRepo.GetByReferenceAsync(referenceType, referenceId, page, pageSize);
+            var comments = (await _commentRepo.GetByReferenceAsync(referenceType, referenceId, page, pageSize)).ToList();
+
+            var commentIds = comments.Select(c => c.Id).ToList();
+            var likeCounts = await _likeRepo.CountByReferenceIdsAsync(ReferenceTypes.Comment, commentIds);
+            var likedIds = currentUserId.HasValue
+                ? await _likeRepo.GetLikedReferenceIdsAsync(ReferenceTypes.Comment, commentIds, currentUserId.Value)
+                : null;
 
             var result = new CommentListDto
             {
-                Comments = comments.Select(ToDto),
+                Comments = comments.Select(c => ToDto(
+                    c,
+                    likeCounts.GetValueOrDefault(c.Id),
+                    likedIds == null ? null : likedIds.Contains(c.Id))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -141,7 +156,7 @@ namespace TalentShowcase.Api.Services.Implementations
             await _commentRepo.AddAsync(comment);
             await _commentRepo.SaveChangesAsync();
 
-            return new Result<CommentDto> { Data = ToDto(comment), IsSuccess = true, Message = "Comment added successfully.", StatusCode = 201 };
+            return new Result<CommentDto> { Data = ToDto(comment, 0, false), IsSuccess = true, Message = "Comment added successfully.", StatusCode = 201 };
         }
 
         private async Task NotifyAsync(int recipientUserId, int actorUserId, string action, string referenceType, int referenceId)
@@ -153,10 +168,12 @@ namespace TalentShowcase.Api.Services.Implementations
             await _notificationService.CreateAsync(recipientUserId, $"{actor.Username} {action}.", referenceType, referenceId);
         }
 
-        private static CommentDto ToDto(Comment comment) => new CommentDto
+        private static CommentDto ToDto(Comment comment, int likeCount, bool? isLiked) => new CommentDto
         {
             Id = comment.Id,
             Content = comment.Content,
+            LikeCount = likeCount,
+            IsLiked = isLiked,
             CreatedAt = comment.CreatedAt,
             UpdatedAt = comment.UpdatedAt,
             Author = new CommentAuthorDto

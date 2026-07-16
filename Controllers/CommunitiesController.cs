@@ -36,7 +36,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetCommunityPosts(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _communityService.GetCommunityPostsAsync(id, page, pageSize);
+            var result = await _communityService.GetCommunityPostsAsync(id, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

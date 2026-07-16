@@ -23,6 +23,19 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Select(g => new { ReferenceId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ReferenceId, x => x.Count);
 
+        // Returns the subset of referenceIds that this specific user has liked — used to
+        // compute a per-item "isLiked" flag for the current viewer across a page of results
+        // in one batched query, instead of one existence check per item.
+        public async Task<HashSet<int>> GetLikedReferenceIdsAsync(string referenceType, IEnumerable<int> referenceIds, int userId)
+        {
+            var liked = await _dbSet
+                .Where(l => l.ReferenceType == referenceType && l.UserId == userId && referenceIds.Contains(l.ReferenceId))
+                .Select(l => l.ReferenceId)
+                .ToListAsync();
+
+            return liked.ToHashSet();
+        }
+
         public async Task DeleteByReferenceAsync(string referenceType, int referenceId) =>
             await _dbSet
                 .Where(l => l.ReferenceType == referenceType && l.ReferenceId == referenceId)

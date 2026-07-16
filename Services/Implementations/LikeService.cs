@@ -11,6 +11,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ILikeRepository _likeRepo;
         private readonly IVideoRepository _videoRepo;
         private readonly ICommunityPostRepository _communityPostRepo;
+        private readonly ICommentRepository _commentRepo;
         private readonly IUserRepository _userRepo;
         private readonly INotificationService _notificationService;
 
@@ -18,12 +19,14 @@ namespace TalentShowcase.Api.Services.Implementations
             ILikeRepository likeRepo,
             IVideoRepository videoRepo,
             ICommunityPostRepository communityPostRepo,
+            ICommentRepository commentRepo,
             IUserRepository userRepo,
             INotificationService notificationService)
         {
             _likeRepo = likeRepo;
             _videoRepo = videoRepo;
             _communityPostRepo = communityPostRepo;
+            _commentRepo = commentRepo;
             _userRepo = userRepo;
             _notificationService = notificationService;
         }
@@ -52,6 +55,20 @@ namespace TalentShowcase.Api.Services.Implementations
 
             if (liked && post.UserId != userId)
                 await NotifyAsync(post.UserId, userId, "liked your post", ReferenceTypes.CommunityPost, postId);
+
+            return result;
+        }
+
+        public async Task<Result<object>> ToggleCommentLikeAsync(int userId, int commentId)
+        {
+            var comment = await _commentRepo.GetByIdAsync(commentId);
+            if (comment == null)
+                return new Result<object> { IsSuccess = false, Message = "Comment not found.", StatusCode = 404 };
+
+            var (result, liked) = await ToggleAsync(userId, ReferenceTypes.Comment, commentId);
+
+            if (liked && comment.UserId != userId)
+                await NotifyAsync(comment.UserId, userId, "liked your comment", ReferenceTypes.Comment, commentId);
 
             return result;
         }
