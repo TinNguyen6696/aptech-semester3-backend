@@ -40,5 +40,12 @@ namespace TalentShowcase.Api.Repositories.Implementations
             await _dbSet
                 .Where(l => l.ReferenceType == referenceType && l.ReferenceId == referenceId)
                 .ExecuteDeleteAsync();
+
+        // Batch variant: delete all likes pointing at any of the given referenceIds — used when
+        // a parent (video/post) is deleted to clear the likes on all of its child comments at once.
+        public async Task DeleteByReferencesAsync(string referenceType, IEnumerable<int> referenceIds) =>
+            await _dbSet
+                .Where(l => l.ReferenceType == referenceType && referenceIds.Contains(l.ReferenceId))
+                .ExecuteDeleteAsync();
     }
 }

@@ -130,6 +130,12 @@ namespace TalentShowcase.Api.Services.Implementations
             // with cascade delete, so the DB handles those automatically.
             await using (var transaction = await _context.Database.BeginTransactionAsync())
             {
+                // Clear likes ON the video's comments before deleting those comments — comment-likes
+                // are polymorphic too, so nothing cascades them.
+                var commentIds = await _commentRepo.GetIdsByReferenceAsync(ReferenceTypes.Video, videoId);
+                if (commentIds.Count > 0)
+                    await _likeRepo.DeleteByReferencesAsync(ReferenceTypes.Comment, commentIds);
+
                 await _likeRepo.DeleteByReferenceAsync(ReferenceTypes.Video, videoId);
                 await _commentRepo.DeleteByReferenceAsync(ReferenceTypes.Video, videoId);
 

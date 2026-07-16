@@ -1,4 +1,5 @@
 using TalentShowcase.Api.Common;
+using TalentShowcase.Api.Data;
 using TalentShowcase.Api.DTOs.Comments;
 using TalentShowcase.Api.Models.Constants;
 using TalentShowcase.Api.Models.Entities;
@@ -17,6 +18,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ILikeRepository _likeRepo;
         private readonly IUserRepository _userRepo;
         private readonly INotificationService _notificationService;
+        private readonly AppDbContext _context;
 
         public CommentService(
             ICommentRepository commentRepo,
@@ -24,7 +26,8 @@ namespace TalentShowcase.Api.Services.Implementations
             ICommunityPostRepository communityPostRepo,
             ILikeRepository likeRepo,
             IUserRepository userRepo,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            AppDbContext context)
         {
             _commentRepo = commentRepo;
             _videoRepo = videoRepo;
@@ -32,6 +35,7 @@ namespace TalentShowcase.Api.Services.Implementations
             _likeRepo = likeRepo;
             _userRepo = userRepo;
             _notificationService = notificationService;
+            _context = context;
         }
 
         public async Task<Result<CommentListDto>> GetVideoCommentsAsync(int videoId, int page, int pageSize, int? currentUserId)
@@ -102,8 +106,15 @@ namespace TalentShowcase.Api.Services.Implementations
             if (comment == null || (comment.UserId != userId && !isAdmin))
                 return new Result<object> { IsSuccess = false, Message = "Comment not found.", StatusCode = 404 };
 
+            // Clear the comment's own likes (polymorphic, no FK) alongside the comment row, atomically.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            await _likeRepo.DeleteByReferenceAsync(ReferenceTypes.Comment, commentId);
+
             _commentRepo.Remove(comment);
             await _commentRepo.SaveChangesAsync();
+
+            await transaction.CommitAsync();
 
             return new Result<object> { IsSuccess = true, Message = "Comment deleted successfully.", StatusCode = 200 };
         }

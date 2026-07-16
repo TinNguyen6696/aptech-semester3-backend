@@ -1,4 +1,5 @@
 using TalentShowcase.Api.Common;
+using TalentShowcase.Api.Data;
 using TalentShowcase.Api.DTOs.Comments;
 using TalentShowcase.Api.DTOs.Communities;
 using TalentShowcase.Api.Models.Constants;
@@ -16,17 +17,20 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ICommunityPostRepository _postRepo;
         private readonly ILikeRepository _likeRepo;
         private readonly ICommentRepository _commentRepo;
+        private readonly AppDbContext _context;
 
         public CommunityService(
             IGenericRepository<Community> communityRepo,
             ICommunityPostRepository postRepo,
             ILikeRepository likeRepo,
-            ICommentRepository commentRepo)
+            ICommentRepository commentRepo,
+            AppDbContext context)
         {
             _communityRepo = communityRepo;
             _postRepo = postRepo;
             _likeRepo = likeRepo;
             _commentRepo = commentRepo;
+            _context = context;
         }
 
         public async Task<Result<IEnumerable<CommunityDto>>> GetCommunitiesAsync()
@@ -132,8 +136,21 @@ namespace TalentShowcase.Api.Services.Implementations
             if (post == null || (post.UserId != userId && !isAdmin))
                 return new Result<object> { IsSuccess = false, Message = "Post not found.", StatusCode = 404 };
 
+            // Likes/Comments are polymorphic (no FK to the post), so clean them up manually in a
+            // transaction: the post's comment-likes, then the post's likes, then its comments.
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var commentIds = await _commentRepo.GetIdsByReferenceAsync(ReferenceTypes.CommunityPost, postId);
+            if (commentIds.Count > 0)
+                await _likeRepo.DeleteByReferencesAsync(ReferenceTypes.Comment, commentIds);
+
+            await _likeRepo.DeleteByReferenceAsync(ReferenceTypes.CommunityPost, postId);
+            await _commentRepo.DeleteByReferenceAsync(ReferenceTypes.CommunityPost, postId);
+
             _postRepo.Remove(post);
             await _postRepo.SaveChangesAsync();
+
+            await transaction.CommitAsync();
 
             return new Result<object> { IsSuccess = true, Message = "Post deleted successfully.", StatusCode = 200 };
         }

@@ -9,6 +9,7 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<Dictionary<int, int>> CountByReferenceIdsAsync(string referenceType, IEnumerable<int> referenceIds);
         Task<Comment?> GetByIdWithUserAsync(int id);
         Task DeleteByReferenceAsync(string referenceType, int referenceId);
+        Task<List<int>> GetIdsByReferenceAsync(string referenceType, int referenceId);
         Task<IEnumerable<Comment>> GetAllPagedAsync(int page, int pageSize);
         Task<int> CountAllAsync();
     }

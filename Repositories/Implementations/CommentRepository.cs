@@ -37,6 +37,14 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Where(c => c.ReferenceType == referenceType && c.ReferenceId == referenceId)
                 .ExecuteDeleteAsync();
 
+        // The comment IDs under a parent (video/post) — needed before deleting those comments so
+        // we know which comment-likes to clear (comments are polymorphic; nothing cascades).
+        public async Task<List<int>> GetIdsByReferenceAsync(string referenceType, int referenceId) =>
+            await _dbSet
+                .Where(c => c.ReferenceType == referenceType && c.ReferenceId == referenceId)
+                .Select(c => c.Id)
+                .ToListAsync();
+
         // Admin-only: every comment across every reference type, for moderation.
         public async Task<IEnumerable<Comment>> GetAllPagedAsync(int page, int pageSize) =>
             await _dbSet
