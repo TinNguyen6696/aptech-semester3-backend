@@ -36,9 +36,9 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPublicVideos([FromQuery] TalentCategory? category, [FromQuery] VideoSortBy sortBy = VideoSortBy.Newest, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        public async Task<IActionResult> GetPublicVideos([FromQuery] TalentCategory? category, [FromQuery] int? provinceId, [FromQuery] SkillLevel? skillLevel, [FromQuery] VideoSortBy sortBy = VideoSortBy.Newest, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _videoService.GetPublicVideosAsync(category, sortBy, page, pageSize, CurrentUserIdOrNull);
+            var result = await _videoService.GetPublicVideosAsync(category, provinceId, skillLevel, sortBy, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

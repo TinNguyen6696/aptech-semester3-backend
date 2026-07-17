@@ -151,10 +151,13 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<object> { IsSuccess = true, Message = "Video deleted successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, VideoSortBy sortBy, int page, int pageSize, int? currentUserId)
+        public async Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, int? provinceId, SkillLevel? skillLevel, VideoSortBy sortBy, int page, int pageSize, int? currentUserId)
         {
             if (category.HasValue && !Enum.IsDefined(category.Value))
                 return new Result<PublicVideoListDto> { IsSuccess = false, Message = "Invalid category.", StatusCode = 400 };
+
+            if (skillLevel.HasValue && !Enum.IsDefined(skillLevel.Value))
+                return new Result<PublicVideoListDto> { IsSuccess = false, Message = "Invalid skill level.", StatusCode = 400 };
 
             if (page < 1)
                 return new Result<PublicVideoListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
@@ -162,8 +165,8 @@ namespace TalentShowcase.Api.Services.Implementations
             if (pageSize < 1 || pageSize > MaxPageSize)
                 return new Result<PublicVideoListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
 
-            var totalCount = await _videoRepo.CountPublicAsync(category);
-            var videos = (await _videoRepo.GetPublicAsync(category, sortBy, page, pageSize)).ToList();
+            var totalCount = await _videoRepo.CountPublicAsync(category, provinceId, skillLevel);
+            var videos = (await _videoRepo.GetPublicAsync(category, provinceId, skillLevel, sortBy, page, pageSize)).ToList();
             var stats = await GetStatsBatchAsync(videos.Select(v => v.Id), currentUserId);
 
             var result = new PublicVideoListDto

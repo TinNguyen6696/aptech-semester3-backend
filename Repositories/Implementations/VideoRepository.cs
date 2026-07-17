@@ -19,9 +19,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountByUserIdAsync(int userId) =>
             await _dbSet.CountAsync(v => v.UserId == userId);
 
-        public async Task<IEnumerable<Video>> GetPublicAsync(TalentCategory? category, VideoSortBy sortBy, int page, int pageSize)
+        public async Task<IEnumerable<Video>> GetPublicAsync(TalentCategory? category, int? provinceId, SkillLevel? skillLevel, VideoSortBy sortBy, int page, int pageSize)
         {
-            var query = PublicQuery(category);
+            var query = PublicQuery(category, provinceId, skillLevel);
 
             query = sortBy switch
             {
@@ -36,8 +36,8 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .ToListAsync();
         }
 
-        public async Task<int> CountPublicAsync(TalentCategory? category) =>
-            await PublicQuery(category).CountAsync();
+        public async Task<int> CountPublicAsync(TalentCategory? category, int? provinceId, SkillLevel? skillLevel) =>
+            await PublicQuery(category, provinceId, skillLevel).CountAsync();
 
         public async Task<Video?> GetPublicByIdAsync(int id) =>
             await _dbSet
@@ -77,7 +77,7 @@ namespace TalentShowcase.Api.Repositories.Implementations
                     .ThenInclude(u => u.Profile)
                 .Where(v => v.UserId == userId && v.Visibility == VideoVisibility.Public);
 
-        private IQueryable<Video> PublicQuery(TalentCategory? category)
+        private IQueryable<Video> PublicQuery(TalentCategory? category, int? provinceId, SkillLevel? skillLevel)
         {
             var query = _dbSet
                 .Include(v => v.User)
@@ -86,6 +86,13 @@ namespace TalentShowcase.Api.Repositories.Implementations
 
             if (category.HasValue)
                 query = query.Where(v => v.Category == category.Value);
+
+            // Filters on the uploader's profile (user_profiles is a required 1:1 on User, so no null risk).
+            if (provinceId.HasValue)
+                query = query.Where(v => v.User.Profile!.ProvinceId == provinceId.Value);
+
+            if (skillLevel.HasValue)
+                query = query.Where(v => v.User.Profile!.SkillLevel == skillLevel.Value);
 
             return query;
         }

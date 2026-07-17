@@ -11,7 +11,7 @@ namespace TalentShowcase.Api.Services.Interfaces
         Task<Result<VideoDto>> UpdateVideoAsync(int userId, int videoId, UpdateVideoRequest request);
         Task<Result<object>> DeleteVideoAsync(int userId, int videoId, bool isAdmin);
         Task<Result<PublicVideoListDto>> GetPublicVideosByUserAsync(int userId, int page, int pageSize, int? currentUserId);
-        Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, VideoSortBy sortBy, int page, int pageSize, int? currentUserId);
+        Task<Result<PublicVideoListDto>> GetPublicVideosAsync(TalentCategory? category, int? provinceId, SkillLevel? skillLevel, VideoSortBy sortBy, int page, int pageSize, int? currentUserId);
         Task<Result<PublicVideoDto>> GetPublicVideoByIdAsync(int id, int? currentUserId);
     }
 }
