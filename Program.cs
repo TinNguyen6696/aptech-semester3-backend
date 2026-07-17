@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.OpenApi.Models;
 using TalentShowcase.Api.Common;
 using TalentShowcase.Api.Data;
 using TalentShowcase.Api.Extensions;
@@ -14,7 +15,26 @@ const long MaxVideoUploadSizeBytes = 300 * 1024 * 1024;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "TalentShowcase API", Version = "v1" });
+
+    // JWT bearer auth: adds the "Authorize" button. Paste ONLY the access token (no "Bearer " prefix).
+    var jwtScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Paste your JWT access token here (from POST /api/auth/login). Do NOT include the word 'Bearer'.",
+        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+    };
+
+    options.AddSecurityDefinition("Bearer", jwtScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtScheme, Array.Empty<string>() } });
+});
 
 builder.Services.Configure<KestrelServerOptions>(options =>
 {
@@ -72,6 +92,14 @@ var app = builder.Build();
 
 var webRootPath = app.Environment.WebRootPath ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(webRootPath);
+
+// Interactive API docs at /swagger. Anonymous (the swagger endpoints themselves aren't auth-gated);
+// use the Authorize button to test protected endpoints with a JWT.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "TalentShowcase API v1");
+});
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
