@@ -127,7 +127,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<object> { IsSuccess = true, Message = "Contest deleted successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<ContestEntryListDto>> GetEntriesAsync(int contestId, int page, int pageSize)
+        public async Task<Result<ContestEntryListDto>> GetEntriesAsync(int contestId, int page, int pageSize, int? currentUserId)
         {
             var contest = await _contestRepo.GetByIdAsync(contestId);
             if (contest == null)
@@ -141,12 +141,20 @@ namespace TalentShowcase.Api.Services.Implementations
 
             var totalCount = await _entryRepo.CountByContestIdAsync(contestId);
             var entries = (await _entryRepo.GetByContestIdAsync(contestId, page, pageSize)).ToList();
-            var voteCounts = await _voteRepo.CountByEntryIdsAsync(entries.Select(e => e.Id));
+
+            var entryIds = entries.Select(e => e.Id).ToList();
+            var voteCounts = await _voteRepo.CountByEntryIdsAsync(entryIds);
+            var votedIds = currentUserId.HasValue
+                ? await _voteRepo.GetVotedEntryIdsAsync(entryIds, currentUserId.Value)
+                : null;
 
             // Entries already arrive ranked by vote count from the repository (DB-level, pre-pagination).
             var result = new ContestEntryListDto
             {
-                Entries = entries.Select(e => ToDto(e, voteCounts.GetValueOrDefault(e.Id))),
+                Entries = entries.Select(e => ToDto(
+                    e,
+                    voteCounts.GetValueOrDefault(e.Id),
+                    votedIds == null ? null : votedIds.Contains(e.Id))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -180,7 +188,7 @@ namespace TalentShowcase.Api.Services.Implementations
             await _entryRepo.SaveChangesAsync();
 
             var created = await _entryRepo.GetByIdWithDetailsAsync(entry.Id);
-            return new Result<ContestEntryDto> { Data = ToDto(created!, 0), IsSuccess = true, Message = "Entry submitted successfully.", StatusCode = 201 };
+            return new Result<ContestEntryDto> { Data = ToDto(created!, 0, false), IsSuccess = true, Message = "Entry submitted successfully.", StatusCode = 201 };
         }
 
         public async Task<Result<object>> WithdrawEntryAsync(int userId, int contestId, int entryId, bool isAdmin)
@@ -242,7 +250,7 @@ namespace TalentShowcase.Api.Services.Implementations
             CreatedAt = contest.CreatedAt
         };
 
-        private static ContestEntryDto ToDto(ContestEntry entry, int voteCount) => new ContestEntryDto
+        private static ContestEntryDto ToDto(ContestEntry entry, int voteCount, bool? isVoted) => new ContestEntryDto
         {
             Id = entry.Id,
             ContestId = entry.ContestId,
@@ -251,6 +259,7 @@ namespace TalentShowcase.Api.Services.Implementations
             VideoUrl = entry.Video.VideoUrl,
             ThumbnailUrl = entry.Video.ThumbnailUrl,
             VoteCount = voteCount,
+            IsVoted = isVoted,
             CreatedAt = entry.CreatedAt,
             Owner = new CommentAuthorDto
             {

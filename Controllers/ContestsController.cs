@@ -61,7 +61,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetEntries(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _contestService.GetEntriesAsync(id, page, pageSize);
+            var result = await _contestService.GetEntriesAsync(id, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

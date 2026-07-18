@@ -11,6 +11,7 @@ namespace TalentShowcase.Api.DTOs.Contests
         public string VideoUrl { get; set; } = null!;
         public string? ThumbnailUrl { get; set; }
         public int VoteCount { get; set; }
+        public bool? IsVoted { get; set; }
         public DateTime CreatedAt { get; set; }
         public CommentAuthorDto Owner { get; set; } = null!;
     }
