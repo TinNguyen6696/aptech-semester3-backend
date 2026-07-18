@@ -10,5 +10,7 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<IEnumerable<ContestEntry>> GetByContestIdAsync(int contestId, int page, int pageSize);
         Task<int> CountByContestIdAsync(int contestId);
         Task<Dictionary<int, int>> CountByContestIdsAsync(IEnumerable<int> contestIds);
+        Task<IEnumerable<ContestEntry>> GetByEntrantUserIdAsync(int userId, int page, int pageSize);
+        Task<int> CountByEntrantUserIdAsync(int userId);
     }
 }

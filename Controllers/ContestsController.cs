@@ -57,6 +57,14 @@ namespace TalentShowcase.Api.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("my-entries")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> GetMyEntries([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _contestService.GetMyEntriesAsync(CurrentUserId, page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id:int}/entries")]
         [AllowAnonymous]
         public async Task<IActionResult> GetEntries(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)

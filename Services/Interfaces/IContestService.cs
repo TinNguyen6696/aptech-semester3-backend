@@ -13,6 +13,7 @@ namespace TalentShowcase.Api.Services.Interfaces
         Task<Result<object>> DeleteContestAsync(int contestId);
 
         Task<Result<ContestEntryListDto>> GetEntriesAsync(int contestId, int page, int pageSize, int? currentUserId);
+        Task<Result<MyContestEntryListDto>> GetMyEntriesAsync(int userId, int page, int pageSize);
         Task<Result<ContestEntryDto>> AddEntryAsync(int userId, int contestId, CreateContestEntryRequest request);
         Task<Result<object>> WithdrawEntryAsync(int userId, int contestId, int entryId, bool isAdmin);
         Task<Result<object>> ToggleVoteAsync(int userId, int contestId, int entryId);

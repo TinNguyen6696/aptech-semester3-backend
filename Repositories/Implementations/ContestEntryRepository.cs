@@ -47,5 +47,20 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .GroupBy(e => e.ContestId)
                 .Select(g => new { ContestId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ContestId, x => x.Count);
+
+        // A user "enters" a contest by submitting one of their videos, so entrant = entry.Video.UserId.
+        // Includes Contest + Video for the "My Entries" tab; newest submission first.
+        public async Task<IEnumerable<ContestEntry>> GetByEntrantUserIdAsync(int userId, int page, int pageSize) =>
+            await _dbSet
+                .Include(e => e.Contest)
+                .Include(e => e.Video)
+                .Where(e => e.Video.UserId == userId)
+                .OrderByDescending(e => e.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountByEntrantUserIdAsync(int userId) =>
+            await _dbSet.CountAsync(e => e.Video.UserId == userId);
     }
 }

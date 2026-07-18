@@ -164,6 +164,44 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<ContestEntryListDto> { Data = result, IsSuccess = true, Message = "Entries retrieved successfully.", StatusCode = 200 };
         }
 
+        public async Task<Result<MyContestEntryListDto>> GetMyEntriesAsync(int userId, int page, int pageSize)
+        {
+            if (page < 1)
+                return new Result<MyContestEntryListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<MyContestEntryListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _entryRepo.CountByEntrantUserIdAsync(userId);
+            var entries = (await _entryRepo.GetByEntrantUserIdAsync(userId, page, pageSize)).ToList();
+            var voteCounts = await _voteRepo.CountByEntryIdsAsync(entries.Select(e => e.Id).ToList());
+
+            var result = new MyContestEntryListDto
+            {
+                Entries = entries.Select(e => new MyContestEntryDto
+                {
+                    EntryId = e.Id,
+                    VoteCount = voteCounts.GetValueOrDefault(e.Id),
+                    EnteredAt = e.CreatedAt,
+                    VideoId = e.VideoId,
+                    VideoTitle = e.Video.Title,
+                    VideoUrl = e.Video.VideoUrl,
+                    ThumbnailUrl = e.Video.ThumbnailUrl,
+                    ContestId = e.ContestId,
+                    ContestTitle = e.Contest.Title,
+                    ContestCategory = e.Contest.Category,
+                    ContestStartDate = e.Contest.StartDate,
+                    ContestEndDate = e.Contest.EndDate
+                }),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<MyContestEntryListDto> { Data = result, IsSuccess = true, Message = "Your contest entries retrieved successfully.", StatusCode = 200 };
+        }
+
         public async Task<Result<ContestEntryDto>> AddEntryAsync(int userId, int contestId, CreateContestEntryRequest request)
         {
             var contest = await _contestRepo.GetByIdAsync(contestId);
