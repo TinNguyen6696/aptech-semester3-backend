@@ -21,6 +21,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IRatingRepository _ratingRepo;
         private readonly IVideoViewRepository _videoViewRepo;
         private readonly IContestEntryRepository _contestEntryRepo;
+        private readonly IReportRepository _reportRepo;
         private readonly AppDbContext _context;
 
         public VideoService(
@@ -31,6 +32,7 @@ namespace TalentShowcase.Api.Services.Implementations
             IRatingRepository ratingRepo,
             IVideoViewRepository videoViewRepo,
             IContestEntryRepository contestEntryRepo,
+            IReportRepository reportRepo,
             AppDbContext context)
         {
             _videoRepo = videoRepo;
@@ -40,6 +42,7 @@ namespace TalentShowcase.Api.Services.Implementations
             _ratingRepo = ratingRepo;
             _videoViewRepo = videoViewRepo;
             _contestEntryRepo = contestEntryRepo;
+            _reportRepo = reportRepo;
             _context = context;
         }
 
@@ -81,7 +84,7 @@ namespace TalentShowcase.Api.Services.Implementations
             await _videoRepo.AddAsync(video);
             await _videoRepo.SaveChangesAsync();
 
-            return new Result<VideoDto> { Data = ToDto(video, VideoStats.Empty with { IsLiked = false }), IsSuccess = true, Message = "Video added successfully.", StatusCode = 201 };
+            return new Result<VideoDto> { Data = ToDto(video, VideoStats.Empty with { IsLiked = false, IsReported = false }), IsSuccess = true, Message = "Video added successfully.", StatusCode = 201 };
         }
 
         public async Task<Result<VideoDto>> UpdateVideoAsync(int userId, int videoId, UpdateVideoRequest request)
@@ -227,7 +230,11 @@ namespace TalentShowcase.Api.Services.Implementations
                 ? (await _likeRepo.GetAsync(ReferenceTypes.Video, videoId, currentUserId.Value)) != null
                 : null;
 
-            return new VideoStats(viewCount, likeCount, commentCount, averageRating, isLiked);
+            bool? isReported = currentUserId.HasValue
+                ? await _reportRepo.ExistsAsync(videoId, currentUserId.Value)
+                : null;
+
+            return new VideoStats(viewCount, likeCount, commentCount, averageRating, isLiked, isReported);
         }
 
         private async Task<Dictionary<int, VideoStats>> GetStatsBatchAsync(IEnumerable<int> videoIds, int? currentUserId)
@@ -243,12 +250,17 @@ namespace TalentShowcase.Api.Services.Implementations
                 ? await _likeRepo.GetLikedReferenceIdsAsync(ReferenceTypes.Video, ids, currentUserId.Value)
                 : null;
 
+            var reportedIds = currentUserId.HasValue
+                ? await _reportRepo.GetReportedVideoIdsAsync(ids, currentUserId.Value)
+                : null;
+
             return ids.ToDictionary(id => id, id => new VideoStats(
                 viewCounts.GetValueOrDefault(id),
                 likeCounts.GetValueOrDefault(id),
                 commentCounts.GetValueOrDefault(id),
                 averageRatings.TryGetValue(id, out var avg) ? avg : null,
-                likedIds == null ? null : likedIds.Contains(id)));
+                likedIds == null ? null : likedIds.Contains(id),
+                reportedIds == null ? null : reportedIds.Contains(id)));
         }
 
         private static VideoDto ToDto(Video video, VideoStats stats) => new VideoDto
@@ -265,6 +277,7 @@ namespace TalentShowcase.Api.Services.Implementations
             IsLiked = stats.IsLiked,
             CommentCount = stats.CommentCount,
             AverageRating = stats.AverageRating,
+            IsReported = stats.IsReported,
             CreatedAt = video.CreatedAt
         };
 
@@ -281,6 +294,7 @@ namespace TalentShowcase.Api.Services.Implementations
             IsLiked = stats.IsLiked,
             CommentCount = stats.CommentCount,
             AverageRating = stats.AverageRating,
+            IsReported = stats.IsReported,
             CreatedAt = video.CreatedAt,
             Owner = new VideoOwnerDto
             {
@@ -292,9 +306,9 @@ namespace TalentShowcase.Api.Services.Implementations
             }
         };
 
-        private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating, bool? IsLiked)
+        private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating, bool? IsLiked, bool? IsReported)
         {
-            public static readonly VideoStats Empty = new(0, 0, 0, null, null);
+            public static readonly VideoStats Empty = new(0, 0, 0, null, null, null);
         }
     }
 }
