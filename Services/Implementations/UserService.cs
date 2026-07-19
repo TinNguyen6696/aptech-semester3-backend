@@ -77,17 +77,28 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<PublicProfileDto> { Data = dto, IsSuccess = true, Message = "Profile retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<MentorListDto>> GetMentorsAsync(int page, int pageSize)
+        public async Task<Result<MentorListDto>> GetMentorsAsync(TalentCategory? category, SkillLevel? skillLevel, int? provinceId, string? search, int page, int pageSize, int? currentUserId)
         {
+            if (category.HasValue && !Enum.IsDefined(category.Value))
+                return new Result<MentorListDto> { IsSuccess = false, Message = "Invalid category.", StatusCode = 400 };
+
+            if (skillLevel.HasValue && !Enum.IsDefined(skillLevel.Value))
+                return new Result<MentorListDto> { IsSuccess = false, Message = "Invalid skill level.", StatusCode = 400 };
+
             if (page < 1)
                 return new Result<MentorListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
 
             if (pageSize < 1 || pageSize > MaxPageSize)
                 return new Result<MentorListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
 
-            var totalCount = await _userRepo.CountActiveByRoleAsync(UserRole.Mentor);
-            var mentors = (await _userRepo.GetActiveByRolePagedAsync(UserRole.Mentor, page, pageSize)).ToList();
+            var totalCount = await _userRepo.CountActiveByRoleAsync(UserRole.Mentor, category, skillLevel, provinceId, search);
+            var mentors = (await _userRepo.GetActiveByRolePagedAsync(UserRole.Mentor, category, skillLevel, provinceId, search, page, pageSize)).ToList();
             var followerCounts = await _followRepo.CountFollowersBatchAsync(mentors.Select(m => m.Id));
+
+            // null = anonymous viewer (no follow button to show either way).
+            var followingIds = currentUserId.HasValue
+                ? await _followRepo.GetFollowingIdsAsync(currentUserId.Value, mentors.Select(m => m.Id))
+                : null;
 
             var result = new MentorListDto
             {
@@ -103,7 +114,8 @@ namespace TalentShowcase.Api.Services.Implementations
                     SkillLevel = m.Profile.SkillLevel,
                     ProvinceId = m.Profile.ProvinceId,
                     ProvinceName = m.Profile.Province!.Name,
-                    FollowerCount = followerCounts.GetValueOrDefault(m.Id)
+                    FollowerCount = followerCounts.GetValueOrDefault(m.Id),
+                    IsFollowing = followingIds?.Contains(m.Id)
                 }),
                 Page = page,
                 PageSize = pageSize,

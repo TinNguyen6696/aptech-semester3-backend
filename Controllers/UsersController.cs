@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TalentShowcase.Api.DTOs;
 using TalentShowcase.Api.DTOs.Achievements;
 using TalentShowcase.Api.DTOs.Videos;
+using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Services.Interfaces;
 
 namespace TalentShowcase.Api.Controllers
@@ -34,9 +35,9 @@ namespace TalentShowcase.Api.Controllers
 
         [HttpGet("mentors")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetMentors([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        public async Task<IActionResult> GetMentors([FromQuery] TalentCategory? category, [FromQuery] SkillLevel? skillLevel, [FromQuery] int? provinceId, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _userService.GetMentorsAsync(page, pageSize);
+            var result = await _userService.GetMentorsAsync(category, skillLevel, provinceId, search, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

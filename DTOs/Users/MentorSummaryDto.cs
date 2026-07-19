@@ -15,5 +15,6 @@ namespace TalentShowcase.Api.DTOs.Users
         public int ProvinceId { get; set; }
         public string ProvinceName { get; set; } = null!;
         public int FollowerCount { get; set; }
+        public bool? IsFollowing { get; set; }
     }
 }

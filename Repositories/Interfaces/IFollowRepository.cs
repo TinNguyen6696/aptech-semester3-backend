@@ -8,6 +8,7 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<int> CountFollowersAsync(int userId);
         Task<int> CountFollowingAsync(int userId);
         Task<Dictionary<int, int>> CountFollowersBatchAsync(IEnumerable<int> userIds);
+        Task<HashSet<int>> GetFollowingIdsAsync(int followerId, IEnumerable<int> targetIds);
         Task<IEnumerable<Follow>> GetFollowersAsync(int userId, int page, int pageSize);
         Task<IEnumerable<Follow>> GetFollowingAsync(int userId, int page, int pageSize);
     }

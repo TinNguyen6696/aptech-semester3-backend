@@ -59,21 +59,40 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountCreatedSinceAsync(DateTime since) =>
             await _dbSet.CountAsync(u => u.CreatedAt >= since);
 
-        public async Task<IEnumerable<User>> GetActiveByRolePagedAsync(UserRole role, int page, int pageSize) =>
-            await ActiveRoleQuery(role)
+        public async Task<IEnumerable<User>> GetActiveByRolePagedAsync(UserRole role, TalentCategory? category, SkillLevel? skillLevel, int? provinceId, string? search, int page, int pageSize) =>
+            await ActiveRoleQuery(role, category, skillLevel, provinceId, search)
                 .OrderByDescending(u => u.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-        public async Task<int> CountActiveByRoleAsync(UserRole role) =>
-            await ActiveRoleQuery(role).CountAsync();
+        public async Task<int> CountActiveByRoleAsync(UserRole role, TalentCategory? category, SkillLevel? skillLevel, int? provinceId, string? search) =>
+            await ActiveRoleQuery(role, category, skillLevel, provinceId, search).CountAsync();
 
-        private IQueryable<User> ActiveRoleQuery(UserRole role) =>
-            _dbSet
+        private IQueryable<User> ActiveRoleQuery(UserRole role, TalentCategory? category, SkillLevel? skillLevel, int? provinceId, string? search)
+        {
+            var query = _dbSet
                 .Include(u => u.Profile)
                 .ThenInclude(p => p!.Province)
                 .Where(u => u.Role == role && u.IsActive);
+
+            if (category.HasValue)
+                query = query.Where(u => u.Profile!.PrimaryCategory == category.Value);
+
+            if (skillLevel.HasValue)
+                query = query.Where(u => u.Profile!.SkillLevel == skillLevel.Value);
+
+            if (provinceId.HasValue)
+                query = query.Where(u => u.Profile!.ProvinceId == provinceId.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(u =>
+                    u.Username.Contains(search) ||
+                    u.Profile!.FirstName.Contains(search) ||
+                    u.Profile.LastName.Contains(search));
+
+            return query;
+        }
 
         private IQueryable<User> RoleQuery(UserRole? role)
         {
