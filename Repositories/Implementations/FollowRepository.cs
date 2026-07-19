@@ -18,6 +18,13 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountFollowingAsync(int userId) =>
             await _dbSet.CountAsync(f => f.FollowerId == userId);
 
+        public async Task<Dictionary<int, int>> CountFollowersBatchAsync(IEnumerable<int> userIds) =>
+            await _dbSet
+                .Where(f => userIds.Contains(f.FollowingId))
+                .GroupBy(f => f.FollowingId)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.UserId, x => x.Count);
+
         public async Task<IEnumerable<Follow>> GetFollowersAsync(int userId, int page, int pageSize) =>
             await _dbSet
                 .Include(f => f.Follower)

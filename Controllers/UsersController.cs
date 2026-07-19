@@ -32,6 +32,14 @@ namespace TalentShowcase.Api.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("mentors")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetMentors([FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _userService.GetMentorsAsync(page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id:int}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetPublicProfile(int id)

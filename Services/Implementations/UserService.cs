@@ -5,6 +5,7 @@ using TalentShowcase.Api.DTOs.Auth;
 using TalentShowcase.Api.DTOs.Users;
 using TalentShowcase.Api.Helpers;
 using TalentShowcase.Api.Models.Entities;
+using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Repositories.Interfaces;
 using TalentShowcase.Api.Services.Interfaces;
 
@@ -12,6 +13,8 @@ namespace TalentShowcase.Api.Services.Implementations
 {
     public class UserService : IUserService
     {
+        private const int MaxPageSize = 10;
+
         private readonly IUserRepository _userRepo;
         private readonly IGenericRepository<Province> _provinceRepo;
         private readonly IAchievementRepository _achievementRepo;
@@ -72,6 +75,43 @@ namespace TalentShowcase.Api.Services.Implementations
             };
 
             return new Result<PublicProfileDto> { Data = dto, IsSuccess = true, Message = "Profile retrieved successfully.", StatusCode = 200 };
+        }
+
+        public async Task<Result<MentorListDto>> GetMentorsAsync(int page, int pageSize)
+        {
+            if (page < 1)
+                return new Result<MentorListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<MentorListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _userRepo.CountActiveByRoleAsync(UserRole.Mentor);
+            var mentors = (await _userRepo.GetActiveByRolePagedAsync(UserRole.Mentor, page, pageSize)).ToList();
+            var followerCounts = await _followRepo.CountFollowersBatchAsync(mentors.Select(m => m.Id));
+
+            var result = new MentorListDto
+            {
+                Mentors = mentors.Select(m => new MentorSummaryDto
+                {
+                    Id = m.Id,
+                    Username = m.Username,
+                    FirstName = m.Profile!.FirstName,
+                    LastName = m.Profile.LastName,
+                    Bio = m.Profile.Bio,
+                    ProfileImageUrl = m.Profile.ProfileImageUrl,
+                    PrimaryCategory = m.Profile.PrimaryCategory,
+                    SkillLevel = m.Profile.SkillLevel,
+                    ProvinceId = m.Profile.ProvinceId,
+                    ProvinceName = m.Profile.Province!.Name,
+                    FollowerCount = followerCounts.GetValueOrDefault(m.Id)
+                }),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<MentorListDto> { Data = result, IsSuccess = true, Message = "Mentors retrieved successfully.", StatusCode = 200 };
         }
 
         public async Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request)

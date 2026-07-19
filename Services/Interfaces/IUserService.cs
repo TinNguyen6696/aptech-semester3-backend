@@ -10,6 +10,7 @@ namespace TalentShowcase.Api.Services.Interfaces
     {
         Task<Result<UserDto>> GetProfileAsync(int userId);
         Task<Result<PublicProfileDto>> GetPublicProfileAsync(int userId, int? currentUserId);
+        Task<Result<MentorListDto>> GetMentorsAsync(int page, int pageSize);
         Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request);
         Task<Result<UserDto>> UpdateAvatarAsync(int userId, string? profileImageUrl);
 

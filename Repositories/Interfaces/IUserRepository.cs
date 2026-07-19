@@ -14,6 +14,8 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<Dictionary<int, User>> GetByIdsWithProfileAsync(IEnumerable<int> ids);
         Task<IEnumerable<User>> GetAllPagedAsync(UserRole? role, int page, int pageSize);
         Task<int> CountAllAsync(UserRole? role);
+        Task<IEnumerable<User>> GetActiveByRolePagedAsync(UserRole role, int page, int pageSize);
+        Task<int> CountActiveByRoleAsync(UserRole role);
         Task<Dictionary<UserRole, int>> CountByRoleAsync();
         Task<int> CountCreatedSinceAsync(DateTime since);
     }

@@ -59,6 +59,22 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountCreatedSinceAsync(DateTime since) =>
             await _dbSet.CountAsync(u => u.CreatedAt >= since);
 
+        public async Task<IEnumerable<User>> GetActiveByRolePagedAsync(UserRole role, int page, int pageSize) =>
+            await ActiveRoleQuery(role)
+                .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountActiveByRoleAsync(UserRole role) =>
+            await ActiveRoleQuery(role).CountAsync();
+
+        private IQueryable<User> ActiveRoleQuery(UserRole role) =>
+            _dbSet
+                .Include(u => u.Profile)
+                .ThenInclude(p => p!.Province)
+                .Where(u => u.Role == role && u.IsActive);
+
         private IQueryable<User> RoleQuery(UserRole? role)
         {
             var query = _dbSet.Include(u => u.Profile).AsQueryable();
