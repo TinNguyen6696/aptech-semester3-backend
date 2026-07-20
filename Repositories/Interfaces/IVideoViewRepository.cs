@@ -6,5 +6,6 @@ namespace TalentShowcase.Api.Repositories.Interfaces
     {
         Task<int> CountByVideoIdAsync(int videoId);
         Task<Dictionary<int, int>> CountByVideoIdsAsync(IEnumerable<int> videoIds);
+        Task<int> CountAllAsync();
     }
 }

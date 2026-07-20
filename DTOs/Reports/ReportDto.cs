@@ -8,6 +8,8 @@ namespace TalentShowcase.Api.DTOs.Reports
         public int Id { get; set; }
         public int VideoId { get; set; }
         public string VideoTitle { get; set; } = null!;
+        public string VideoUrl { get; set; } = null!;
+        public string? ThumbnailUrl { get; set; }
         public string? Description { get; set; }
         public ReportStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }

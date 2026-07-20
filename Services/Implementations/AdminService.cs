@@ -12,6 +12,7 @@ namespace TalentShowcase.Api.Services.Implementations
     {
         private const int MaxPageSize = 10;
         private const int RecentDays = 7;
+        private const int RecentUsersCount = 5;
 
         private readonly IUserRepository _userRepo;
         private readonly IVideoRepository _videoRepo;
@@ -20,6 +21,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IOpportunityRepository _opportunityRepo;
         private readonly ICommunityPostRepository _communityPostRepo;
         private readonly IRefreshTokenRepository _refreshTokenRepo;
+        private readonly IVideoViewRepository _videoViewRepo;
 
         public AdminService(
             IUserRepository userRepo,
@@ -28,7 +30,8 @@ namespace TalentShowcase.Api.Services.Implementations
             IContestRepository contestRepo,
             IOpportunityRepository opportunityRepo,
             ICommunityPostRepository communityPostRepo,
-            IRefreshTokenRepository refreshTokenRepo)
+            IRefreshTokenRepository refreshTokenRepo,
+            IVideoViewRepository videoViewRepo)
         {
             _userRepo = userRepo;
             _videoRepo = videoRepo;
@@ -37,12 +40,14 @@ namespace TalentShowcase.Api.Services.Implementations
             _opportunityRepo = opportunityRepo;
             _communityPostRepo = communityPostRepo;
             _refreshTokenRepo = refreshTokenRepo;
+            _videoViewRepo = videoViewRepo;
         }
 
         public async Task<Result<AdminDashboardDto>> GetDashboardAsync()
         {
             var roleCounts = await _userRepo.CountByRoleAsync();
             var totalVideos = await _videoRepo.CountAllAsync();
+            var totalViews = await _videoViewRepo.CountAllAsync();
             var totalContests = await _contestRepo.CountPublicAsync(null);
             var totalOpportunities = await _opportunityRepo.CountPublicAsync(null, null);
             var totalCommunityPosts = await _communityPostRepo.CountAllAsync();
@@ -50,6 +55,8 @@ namespace TalentShowcase.Api.Services.Implementations
             var since = DateTime.UtcNow.AddDays(-RecentDays);
             var newUsers = await _userRepo.CountCreatedSinceAsync(since);
             var newVideos = await _videoRepo.CountCreatedSinceAsync(since);
+
+            var recentUsers = await _userRepo.GetAllPagedAsync(null, 1, RecentUsersCount);
 
             var dto = new AdminDashboardDto
             {
@@ -59,11 +66,13 @@ namespace TalentShowcase.Api.Services.Implementations
                 RecruiterCount = roleCounts.GetValueOrDefault(UserRole.Recruiter),
                 AdminCount = roleCounts.GetValueOrDefault(UserRole.Admin),
                 TotalVideos = totalVideos,
+                TotalViews = totalViews,
                 TotalContests = totalContests,
                 TotalOpportunities = totalOpportunities,
                 TotalCommunityPosts = totalCommunityPosts,
                 NewUsersLast7Days = newUsers,
-                NewVideosLast7Days = newVideos
+                NewVideosLast7Days = newVideos,
+                RecentUsers = recentUsers.Select(ToDto)
             };
 
             return new Result<AdminDashboardDto> { Data = dto, IsSuccess = true, Message = "Dashboard retrieved successfully.", StatusCode = 200 };

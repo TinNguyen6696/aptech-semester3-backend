@@ -110,6 +110,8 @@ namespace TalentShowcase.Api.Services.Implementations
             Id = report.Id,
             VideoId = report.VideoId,
             VideoTitle = report.Video.Title,
+            VideoUrl = report.Video.VideoUrl,
+            ThumbnailUrl = report.Video.ThumbnailUrl,
             Description = report.Description,
             Status = report.Status,
             CreatedAt = report.CreatedAt,

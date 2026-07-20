@@ -18,5 +18,8 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .GroupBy(v => v.VideoId)
                 .Select(g => new { VideoId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.VideoId, x => x.Count);
+
+        public async Task<int> CountAllAsync() =>
+            await _dbSet.CountAsync();
     }
 }
