@@ -93,6 +93,22 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<CommunityPostListDto> { Data = result, IsSuccess = true, Message = "Posts retrieved successfully.", StatusCode = 200 };
         }
 
+        public async Task<Result<CommunityPostDto>> GetCommunityPostByIdAsync(int postId, int? currentUserId)
+        {
+            var post = await _postRepo.GetByIdWithUserAsync(postId);
+            if (post == null)
+                return new Result<CommunityPostDto> { IsSuccess = false, Message = "Post not found.", StatusCode = 404 };
+
+            var likeCount = await _likeRepo.CountByReferenceAsync(ReferenceTypes.CommunityPost, postId);
+            var commentCount = await _commentRepo.CountByReferenceAsync(ReferenceTypes.CommunityPost, postId);
+
+            bool? isLiked = currentUserId.HasValue
+                ? (await _likeRepo.GetAsync(ReferenceTypes.CommunityPost, postId, currentUserId.Value)) != null
+                : null;
+
+            return new Result<CommunityPostDto> { Data = ToDto(post, likeCount, commentCount, isLiked), IsSuccess = true, Message = "Post retrieved successfully.", StatusCode = 200 };
+        }
+
         public async Task<Result<CommunityPostDto>> AddCommunityPostAsync(int userId, int communityId, CreateCommunityPostRequest request)
         {
             var community = await _communityRepo.GetByIdAsync(communityId);

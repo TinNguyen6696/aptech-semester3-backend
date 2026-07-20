@@ -23,6 +23,14 @@ namespace TalentShowcase.Api.Controllers
             _commentService = commentService;
         }
 
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPost(int id)
+        {
+            var result = await _communityService.GetCommunityPostByIdAsync(id, CurrentUserIdOrNull);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Mentor")]
         public async Task<IActionResult> UpdatePost(int id, [FromBody] UpdateCommunityPostRequest request)
