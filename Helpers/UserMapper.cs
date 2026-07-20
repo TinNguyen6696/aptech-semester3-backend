@@ -11,6 +11,8 @@ namespace TalentShowcase.Api.Helpers
             Username = user.Username,
             Email = user.Email,
             Role = user.Role,
+            EmailConfirmed = user.EmailConfirmed,
+            IsActive = user.IsActive,
             FirstName = user.Profile!.FirstName,
             LastName = user.Profile.LastName,
             Bio = user.Profile.Bio,

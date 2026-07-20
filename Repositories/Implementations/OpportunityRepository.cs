@@ -12,24 +12,25 @@ namespace TalentShowcase.Api.Repositories.Implementations
 
         public async Task<IEnumerable<Opportunity>> GetPublicAsync(TalentCategory? category, int? provinceId, int page, int pageSize) =>
             await Query(category, provinceId, null)
-                .OrderByDescending(o => o.CreatedAt)
+                .Where(o => o.PostedByUser.IsActive)
+                .OrderByDescending(o => o.PostedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
         public async Task<int> CountPublicAsync(TalentCategory? category, int? provinceId) =>
-            await Query(category, provinceId, null).CountAsync();
+            await Query(category, provinceId, null).Where(o => o.PostedByUser.IsActive).CountAsync();
 
         public async Task<Opportunity?> GetByIdWithDetailsAsync(int id) =>
             await _dbSet
                 .Include(o => o.PostedByUser)
                     .ThenInclude(u => u.Profile)
                 .Include(o => o.Province)
-                .FirstOrDefaultAsync(o => o.Id == id);
+                .FirstOrDefaultAsync(o => o.Id == id && o.PostedByUser.IsActive);
 
         public async Task<IEnumerable<Opportunity>> GetByUserIdAsync(int userId, int page, int pageSize) =>
             await Query(null, null, userId)
-                .OrderByDescending(o => o.CreatedAt)
+                .OrderByDescending(o => o.PostedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

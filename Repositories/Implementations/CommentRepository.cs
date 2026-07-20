@@ -21,7 +21,7 @@ namespace TalentShowcase.Api.Repositories.Implementations
 
         public async Task<Dictionary<int, int>> CountByReferenceIdsAsync(string referenceType, IEnumerable<int> referenceIds) =>
             await _dbSet
-                .Where(c => c.ReferenceType == referenceType && referenceIds.Contains(c.ReferenceId))
+                .Where(c => c.ReferenceType == referenceType && referenceIds.Contains(c.ReferenceId) && c.User.IsActive)
                 .GroupBy(c => c.ReferenceId)
                 .Select(g => new { ReferenceId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.ReferenceId, x => x.Count);
@@ -62,6 +62,6 @@ namespace TalentShowcase.Api.Repositories.Implementations
             _dbSet
                 .Include(c => c.User)
                     .ThenInclude(u => u.Profile)
-                .Where(c => c.ReferenceType == referenceType && c.ReferenceId == referenceId);
+                .Where(c => c.ReferenceType == referenceType && c.ReferenceId == referenceId && c.User.IsActive);
     }
 }

@@ -8,6 +8,8 @@ namespace TalentShowcase.Api.DTOs.Auth
         public string Username { get; set; } = null!;
         public string Email { get; set; } = null!;
         public UserRole Role { get; set; }
+        public bool EmailConfirmed { get; set; }
+        public bool IsActive { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string? Bio { get; set; }

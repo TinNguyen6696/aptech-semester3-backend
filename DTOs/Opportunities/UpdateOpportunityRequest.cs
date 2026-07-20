@@ -17,5 +17,11 @@ namespace TalentShowcase.Api.DTOs.Opportunities
 
         [Required]
         public int? ProvinceId { get; set; }
+
+        [Required]
+        public DateTime? PostedAt { get; set; }
+
+        [Required]
+        public DateTime? ExpiresAt { get; set; }
     }
 }

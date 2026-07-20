@@ -9,6 +9,8 @@ namespace TalentShowcase.Api.Models.Entities
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public int ProvinceId { get; set; }
+        public DateTime PostedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
 
         public User PostedByUser { get; set; } = null!;
         public Province Province { get; set; } = null!;

@@ -95,7 +95,7 @@ namespace TalentShowcase.Api.Services.Implementations
 
         public async Task<Result<CommunityPostDto>> GetCommunityPostByIdAsync(int postId, int? currentUserId)
         {
-            var post = await _postRepo.GetByIdWithUserAsync(postId);
+            var post = await _postRepo.GetPublicByIdAsync(postId);
             if (post == null)
                 return new Result<CommunityPostDto> { IsSuccess = false, Message = "Post not found.", StatusCode = 404 };
 

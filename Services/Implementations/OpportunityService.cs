@@ -87,13 +87,18 @@ namespace TalentShowcase.Api.Services.Implementations
             if (await _provinceRepo.GetByIdAsync(request.ProvinceId!.Value) == null)
                 return new Result<OpportunityDto> { IsSuccess = false, Message = "Invalid province.", StatusCode = 400 };
 
+            if (request.ExpiresAt!.Value <= DateTime.UtcNow)
+                return new Result<OpportunityDto> { IsSuccess = false, Message = "Expiry date must be in the future.", StatusCode = 400 };
+
             var opportunity = new Opportunity
             {
                 PostedByUserId = userId,
                 Category = request.Category!.Value,
                 Title = request.Title,
                 Description = request.Description,
-                ProvinceId = request.ProvinceId!.Value
+                ProvinceId = request.ProvinceId!.Value,
+                PostedAt = request.PostedAt!.Value,
+                ExpiresAt = request.ExpiresAt!.Value
             };
 
             await _opportunityRepo.AddAsync(opportunity);
@@ -115,10 +120,15 @@ namespace TalentShowcase.Api.Services.Implementations
             if (await _provinceRepo.GetByIdAsync(request.ProvinceId!.Value) == null)
                 return new Result<OpportunityDto> { IsSuccess = false, Message = "Invalid province.", StatusCode = 400 };
 
+            if (request.ExpiresAt!.Value <= DateTime.UtcNow)
+                return new Result<OpportunityDto> { IsSuccess = false, Message = "Expiry date must be in the future.", StatusCode = 400 };
+
             opportunity.Category = request.Category!.Value;
             opportunity.Title = request.Title;
             opportunity.Description = request.Description;
             opportunity.ProvinceId = request.ProvinceId!.Value;
+            opportunity.PostedAt = request.PostedAt!.Value;
+            opportunity.ExpiresAt = request.ExpiresAt!.Value;
 
             _opportunityRepo.Update(opportunity);
             await _opportunityRepo.SaveChangesAsync();
@@ -147,6 +157,9 @@ namespace TalentShowcase.Api.Services.Implementations
             Description = opportunity.Description,
             ProvinceId = opportunity.ProvinceId,
             ProvinceName = opportunity.Province.Name,
+            PostedAt = opportunity.PostedAt,
+            ExpiresAt = opportunity.ExpiresAt,
+            IsExpired = opportunity.ExpiresAt < DateTime.UtcNow,
             CreatedAt = opportunity.CreatedAt,
             PostedBy = new CommentAuthorDto
             {

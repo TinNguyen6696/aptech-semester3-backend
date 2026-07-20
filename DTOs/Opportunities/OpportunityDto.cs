@@ -11,6 +11,9 @@ namespace TalentShowcase.Api.DTOs.Opportunities
         public string Description { get; set; } = null!;
         public int ProvinceId { get; set; }
         public string ProvinceName { get; set; } = null!;
+        public DateTime PostedAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        public bool IsExpired { get; set; }
         public DateTime CreatedAt { get; set; }
         public CommentAuthorDto PostedBy { get; set; } = null!;
     }
