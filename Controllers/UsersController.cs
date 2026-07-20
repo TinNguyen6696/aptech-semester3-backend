@@ -33,6 +33,14 @@ namespace TalentShowcase.Api.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("members/count")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetMemberCount()
+        {
+            var result = await _userService.GetMemberCountAsync();
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("mentors")]
         [AllowAnonymous]
         public async Task<IActionResult> GetMentors([FromQuery] TalentCategory? category, [FromQuery] SkillLevel? skillLevel, [FromQuery] int? provinceId, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)

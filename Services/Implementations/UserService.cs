@@ -126,6 +126,12 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<MentorListDto> { Data = result, IsSuccess = true, Message = "Mentors retrieved successfully.", StatusCode = 200 };
         }
 
+        public async Task<Result<int>> GetMemberCountAsync()
+        {
+            var count = await _userRepo.CountActiveByRoleAsync(UserRole.Member, null, null, null, null);
+            return new Result<int> { Data = count, IsSuccess = true, Message = "Member count retrieved successfully.", StatusCode = 200 };
+        }
+
         public async Task<Result<UserDto>> UpdateProfileAsync(int userId, UpdateProfileRequest request)
         {
             var user = await _userRepo.GetByIdWithProfileAsync(userId);
