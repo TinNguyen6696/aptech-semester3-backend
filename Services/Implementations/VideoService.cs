@@ -22,6 +22,7 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IVideoViewRepository _videoViewRepo;
         private readonly IContestEntryRepository _contestEntryRepo;
         private readonly IReportRepository _reportRepo;
+        private readonly IFollowRepository _followRepo;
         private readonly AppDbContext _context;
 
         public VideoService(
@@ -33,6 +34,7 @@ namespace TalentShowcase.Api.Services.Implementations
             IVideoViewRepository videoViewRepo,
             IContestEntryRepository contestEntryRepo,
             IReportRepository reportRepo,
+            IFollowRepository followRepo,
             AppDbContext context)
         {
             _videoRepo = videoRepo;
@@ -43,6 +45,7 @@ namespace TalentShowcase.Api.Services.Implementations
             _videoViewRepo = videoViewRepo;
             _contestEntryRepo = contestEntryRepo;
             _reportRepo = reportRepo;
+            _followRepo = followRepo;
             _context = context;
         }
 
@@ -216,7 +219,14 @@ namespace TalentShowcase.Api.Services.Implementations
                 return new Result<PublicVideoDto> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
             var stats = await GetStatsAsync(id, currentUserId);
-            return new Result<PublicVideoDto> { Data = ToPublicDto(video, stats), IsSuccess = true, Message = "Video retrieved successfully.", StatusCode = 200 };
+
+            var ownerFollowerCount = await _followRepo.CountFollowersAsync(video.UserId);
+
+            bool? ownerIsFollowing = currentUserId.HasValue && currentUserId.Value != video.UserId
+                ? (await _followRepo.GetAsync(currentUserId.Value, video.UserId)) != null
+                : null;
+
+            return new Result<PublicVideoDto> { Data = ToPublicDto(video, stats, ownerFollowerCount, ownerIsFollowing), IsSuccess = true, Message = "Video retrieved successfully.", StatusCode = 200 };
         }
 
         private async Task<VideoStats> GetStatsAsync(int videoId, int? currentUserId)
@@ -281,7 +291,7 @@ namespace TalentShowcase.Api.Services.Implementations
             CreatedAt = video.CreatedAt
         };
 
-        private static PublicVideoDto ToPublicDto(Video video, VideoStats stats) => new PublicVideoDto
+        private static PublicVideoDto ToPublicDto(Video video, VideoStats stats, int? ownerFollowerCount = null, bool? ownerIsFollowing = null) => new PublicVideoDto
         {
             Id = video.Id,
             Category = video.Category,
@@ -302,6 +312,8 @@ namespace TalentShowcase.Api.Services.Implementations
                 Username = video.User.Username,
                 ProfileImageUrl = video.User.Profile?.ProfileImageUrl,
                 PrimaryCategory = video.User.Profile?.PrimaryCategory,
+                FollowerCount = ownerFollowerCount,
+                IsFollowing = ownerIsFollowing,
                 SkillLevel = video.User.Profile?.SkillLevel
             }
         };

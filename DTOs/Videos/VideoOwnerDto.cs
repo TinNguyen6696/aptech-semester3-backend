@@ -9,5 +9,7 @@ namespace TalentShowcase.Api.DTOs.Videos
         public string? ProfileImageUrl { get; set; }
         public TalentCategory? PrimaryCategory { get; set; }
         public SkillLevel? SkillLevel { get; set; }
+        public int? FollowerCount { get; set; }
+        public bool? IsFollowing { get; set; }
     }
 }
