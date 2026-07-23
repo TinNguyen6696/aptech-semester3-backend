@@ -282,6 +282,7 @@ namespace TalentShowcase.Api.Services.Implementations
             VideoUrl = video.VideoUrl,
             ThumbnailUrl = video.ThumbnailUrl,
             Visibility = video.Visibility,
+            IsRemovedByAdmin = video.IsRemovedByAdmin,
             ViewCount = stats.ViewCount,
             LikeCount = stats.LikeCount,
             IsLiked = stats.IsLiked,

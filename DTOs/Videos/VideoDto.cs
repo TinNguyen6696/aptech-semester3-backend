@@ -11,6 +11,7 @@ namespace TalentShowcase.Api.DTOs.Videos
         public string VideoUrl { get; set; } = null!;
         public string? ThumbnailUrl { get; set; }
         public VideoVisibility Visibility { get; set; }
+        public bool IsRemovedByAdmin { get; set; }
         public int ViewCount { get; set; }
         public int LikeCount { get; set; }
         public bool? IsLiked { get; set; }
