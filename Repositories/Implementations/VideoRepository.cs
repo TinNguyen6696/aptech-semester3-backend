@@ -43,7 +43,7 @@ namespace TalentShowcase.Api.Repositories.Implementations
             await _dbSet
                 .Include(v => v.User)
                     .ThenInclude(u => u.Profile)
-                .FirstOrDefaultAsync(v => v.Id == id && v.Visibility == VideoVisibility.Public && v.User.IsActive);
+                .FirstOrDefaultAsync(v => v.Id == id && v.Visibility == VideoVisibility.Public && v.User.IsActive && !v.IsRemovedByAdmin);
 
         public async Task<IEnumerable<Video>> GetPublicByUserIdAsync(int userId, int page, int pageSize) =>
             await PublicByUserQuery(userId)
@@ -75,14 +75,14 @@ namespace TalentShowcase.Api.Repositories.Implementations
             _dbSet
                 .Include(v => v.User)
                     .ThenInclude(u => u.Profile)
-                .Where(v => v.UserId == userId && v.Visibility == VideoVisibility.Public && v.User.IsActive);
+                .Where(v => v.UserId == userId && v.Visibility == VideoVisibility.Public && v.User.IsActive && !v.IsRemovedByAdmin);
 
         private IQueryable<Video> PublicQuery(TalentCategory? category, int? provinceId, SkillLevel? skillLevel)
         {
             var query = _dbSet
                 .Include(v => v.User)
                     .ThenInclude(u => u.Profile)
-                .Where(v => v.Visibility == VideoVisibility.Public && v.User.IsActive);
+                .Where(v => v.Visibility == VideoVisibility.Public && v.User.IsActive && !v.IsRemovedByAdmin);
 
             if (category.HasValue)
                 query = query.Where(v => v.Category == category.Value);

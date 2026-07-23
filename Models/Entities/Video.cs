@@ -11,6 +11,7 @@ namespace TalentShowcase.Api.Models.Entities
         public string VideoUrl { get; set; } = null!;
         public string? ThumbnailUrl { get; set; }
         public VideoVisibility Visibility { get; set; }
+        public bool IsRemovedByAdmin { get; set; }
 
         public User User { get; set; } = null!;
     }

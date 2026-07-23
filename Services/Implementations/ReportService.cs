@@ -91,6 +91,21 @@ namespace TalentShowcase.Api.Services.Implementations
             if (!Enum.IsDefined(request.Status!.Value))
                 return new Result<ReportDto> { IsSuccess = false, Message = "Invalid status.", StatusCode = 400 };
 
+            // Actioned = admin removed the video. Soft-delete (flag, not a real DELETE) so the
+            // Report row (and any sibling reports on the same video) never dangles or gets
+            // cascade-wiped — Report.Video is Cascade-on-delete, so an actual DELETE here would
+            // silently wipe this report's own audit trail along with it.
+            if (request.Status!.Value == ReportStatus.Actioned)
+            {
+                var video = await _videoRepo.GetByIdAsync(report.VideoId);
+                if (video != null)
+                {
+                    video.IsRemovedByAdmin = true;
+                    _videoRepo.Update(video);
+                    await _videoRepo.SaveChangesAsync();
+                }
+            }
+
             report.Status = request.Status!.Value;
             report.ReviewedByUserId = adminUserId;
             report.ReviewedAt = DateTime.UtcNow;
