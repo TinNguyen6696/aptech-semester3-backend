@@ -31,7 +31,7 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Include(e => e.Video)
                     .ThenInclude(v => v.User)
                         .ThenInclude(u => u.Profile)
-                .Where(e => e.ContestId == contestId && e.Video.User.IsActive)
+                .Where(e => e.ContestId == contestId && e.Video.User.IsActive && !e.Video.IsRemovedByAdmin)
                 .OrderByDescending(e => _context.ContestVotes.Count(cv => cv.ContestEntryId == e.Id))
                 .ThenByDescending(e => e.CreatedAt)
                 .Skip((page - 1) * pageSize)
@@ -39,7 +39,7 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .ToListAsync();
 
         public async Task<int> CountByContestIdAsync(int contestId) =>
-            await _dbSet.CountAsync(e => e.ContestId == contestId && e.Video.User.IsActive);
+            await _dbSet.CountAsync(e => e.ContestId == contestId && e.Video.User.IsActive && !e.Video.IsRemovedByAdmin);
 
         public async Task<Dictionary<int, int>> CountByContestIdsAsync(IEnumerable<int> contestIds) =>
             await _dbSet

@@ -274,6 +274,9 @@ namespace TalentShowcase.Api.Services.Implementations
             if (entry == null || entry.ContestId != contestId)
                 return new Result<object> { IsSuccess = false, Message = "Entry not found.", StatusCode = 404 };
 
+            if (entry.Video.IsRemovedByAdmin)
+                return new Result<object> { IsSuccess = false, Message = "This entry is no longer available.", StatusCode = 400 };
+
             var now = DateTime.UtcNow;
             if (now < entry.Contest.StartDate || now > entry.Contest.EndDate)
                 return new Result<object> { IsSuccess = false, Message = "Voting is not open for this contest.", StatusCode = 400 };
