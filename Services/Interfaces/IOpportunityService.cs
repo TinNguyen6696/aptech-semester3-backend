@@ -12,5 +12,7 @@ namespace TalentShowcase.Api.Services.Interfaces
         Task<Result<OpportunityDto>> CreateOpportunityAsync(int userId, CreateOpportunityRequest request);
         Task<Result<OpportunityDto>> UpdateOpportunityAsync(int userId, int opportunityId, UpdateOpportunityRequest request);
         Task<Result<object>> DeleteOpportunityAsync(int userId, int opportunityId, bool isAdmin);
+        Task<Result<object>> ApplyAsync(int userId, int opportunityId);
+        Task<Result<OpportunityApplicationListDto>> GetApplicantsAsync(int recruiterUserId, int opportunityId, int page, int pageSize);
     }
 }

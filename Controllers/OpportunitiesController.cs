@@ -65,5 +65,21 @@ namespace TalentShowcase.Api.Controllers
             var result = await _opportunityService.DeleteOpportunityAsync(CurrentUserId, id, isAdmin);
             return StatusCode(result.StatusCode, result);
         }
+
+        [HttpPost("{id:int}/apply")]
+        [Authorize(Roles = "Member")]
+        public async Task<IActionResult> Apply(int id)
+        {
+            var result = await _opportunityService.ApplyAsync(CurrentUserId, id);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id:int}/applicants")]
+        [Authorize(Roles = "Recruiter")]
+        public async Task<IActionResult> GetApplicants(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _opportunityService.GetApplicantsAsync(CurrentUserId, id, page, pageSize);
+            return StatusCode(result.StatusCode, result);
+        }
     }
 }

@@ -38,6 +38,7 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IMessageRepository, MessageRepository>();
             services.AddScoped<IOpportunityRepository, OpportunityRepository>();
+            services.AddScoped<IOpportunityApplicationRepository, OpportunityApplicationRepository>();
             services.AddScoped<IContestRepository, ContestRepository>();
             services.AddScoped<IContestEntryRepository, ContestEntryRepository>();
             services.AddScoped<IContestVoteRepository, ContestVoteRepository>();

@@ -1,6 +1,7 @@
 using TalentShowcase.Api.Common;
 using TalentShowcase.Api.DTOs.Comments;
 using TalentShowcase.Api.DTOs.Opportunities;
+using TalentShowcase.Api.Models.Constants;
 using TalentShowcase.Api.Models.Entities;
 using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Repositories.Interfaces;
@@ -14,11 +15,22 @@ namespace TalentShowcase.Api.Services.Implementations
 
         private readonly IOpportunityRepository _opportunityRepo;
         private readonly IGenericRepository<Province> _provinceRepo;
+        private readonly IOpportunityApplicationRepository _applicationRepo;
+        private readonly INotificationService _notificationService;
+        private readonly IUserRepository _userRepo;
 
-        public OpportunityService(IOpportunityRepository opportunityRepo, IGenericRepository<Province> provinceRepo)
+        public OpportunityService(
+            IOpportunityRepository opportunityRepo,
+            IGenericRepository<Province> provinceRepo,
+            IOpportunityApplicationRepository applicationRepo,
+            INotificationService notificationService,
+            IUserRepository userRepo)
         {
             _opportunityRepo = opportunityRepo;
             _provinceRepo = provinceRepo;
+            _applicationRepo = applicationRepo;
+            _notificationService = notificationService;
+            _userRepo = userRepo;
         }
 
         public async Task<Result<OpportunityListDto>> GetOpportunitiesAsync(TalentCategory? category, int? provinceId, int page, int pageSize)
@@ -148,6 +160,80 @@ namespace TalentShowcase.Api.Services.Implementations
 
             return new Result<object> { IsSuccess = true, Message = "Opportunity deleted successfully.", StatusCode = 200 };
         }
+
+        public async Task<Result<object>> ApplyAsync(int userId, int opportunityId)
+        {
+            var opportunity = await _opportunityRepo.GetByIdWithDetailsAsync(opportunityId);
+            if (opportunity == null)
+                return new Result<object> { IsSuccess = false, Message = "Opportunity not found.", StatusCode = 404 };
+
+            if (opportunity.ExpiresAt < DateTime.UtcNow)
+                return new Result<object> { IsSuccess = false, Message = "This opportunity has expired.", StatusCode = 400 };
+
+            if (await _applicationRepo.ExistsAsync(opportunityId, userId))
+                return new Result<object> { IsSuccess = false, Message = "You have already applied to this opportunity.", StatusCode = 400 };
+
+            await _applicationRepo.AddAsync(new OpportunityApplication { OpportunityId = opportunityId, ApplicantUserId = userId });
+            await _applicationRepo.SaveChangesAsync();
+
+            await _notificationService.CreateAsync(
+                userId,
+                "You applied successfully. Waiting for the recruiter to review your profile.",
+                ReferenceTypes.Opportunity,
+                opportunityId);
+
+            var applicant = await _userRepo.GetByIdAsync(userId);
+            if (applicant != null)
+                await _notificationService.CreateAsync(
+                    opportunity.PostedByUserId,
+                    $"{applicant.Username} applied to your opportunity \"{opportunity.Title}\".",
+                    ReferenceTypes.Opportunity,
+                    opportunityId);
+
+            return new Result<object> { IsSuccess = true, Message = "Applied successfully.", StatusCode = 201 };
+        }
+
+        public async Task<Result<OpportunityApplicationListDto>> GetApplicantsAsync(int recruiterUserId, int opportunityId, int page, int pageSize)
+        {
+            var opportunity = await _opportunityRepo.GetByIdAsync(opportunityId);
+            if (opportunity == null || opportunity.PostedByUserId != recruiterUserId)
+                return new Result<OpportunityApplicationListDto> { IsSuccess = false, Message = "Opportunity not found.", StatusCode = 404 };
+
+            if (page < 1)
+                return new Result<OpportunityApplicationListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<OpportunityApplicationListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _applicationRepo.CountByOpportunityIdAsync(opportunityId);
+            var applications = await _applicationRepo.GetByOpportunityIdAsync(opportunityId, page, pageSize);
+
+            var result = new OpportunityApplicationListDto
+            {
+                Applications = applications.Select(ToDto),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<OpportunityApplicationListDto> { Data = result, IsSuccess = true, Message = "Applicants retrieved successfully.", StatusCode = 200 };
+        }
+
+        private static OpportunityApplicationDto ToDto(OpportunityApplication application) => new OpportunityApplicationDto
+        {
+            Id = application.Id,
+            OpportunityId = application.OpportunityId,
+            AppliedAt = application.CreatedAt,
+            Applicant = new OpportunityApplicantDto
+            {
+                Id = application.ApplicantUser.Id,
+                Username = application.ApplicantUser.Username,
+                ProfileImageUrl = application.ApplicantUser.Profile?.ProfileImageUrl,
+                PrimaryCategory = application.ApplicantUser.Profile?.PrimaryCategory,
+                SkillLevel = application.ApplicantUser.Profile?.SkillLevel
+            }
+        };
 
         private static OpportunityDto ToDto(Opportunity opportunity) => new OpportunityDto
         {

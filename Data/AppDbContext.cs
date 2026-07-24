@@ -27,6 +27,7 @@ namespace TalentShowcase.Api.Data
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<Message> Messages => Set<Message>();
         public DbSet<Opportunity> Opportunities => Set<Opportunity>();
+        public DbSet<OpportunityApplication> OpportunityApplications => Set<OpportunityApplication>();
         public DbSet<Contest> Contests => Set<Contest>();
         public DbSet<ContestEntry> ContestEntries => Set<ContestEntry>();
         public DbSet<ContestVote> ContestVotes => Set<ContestVote>();
@@ -36,6 +37,14 @@ namespace TalentShowcase.Api.Data
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            base.ConfigureConventions(configurationBuilder);
+
+            configurationBuilder.Properties<DateTime>().HaveConversion<UtcDateTimeConverter>();
+            configurationBuilder.Properties<DateTime?>().HaveConversion<NullableUtcDateTimeConverter>();
         }
 
         public override int SaveChanges()

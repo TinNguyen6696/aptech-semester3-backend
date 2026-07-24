@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TalentShowcase.Api.Data;
 
@@ -11,9 +12,11 @@ using TalentShowcase.Api.Data;
 namespace TalentShowcase.Api.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260724135131_AddOpportunityApplications")]
+    partial class AddOpportunityApplications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,7 +74,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Achievements", (string)null);
+                    b.ToTable("Achievements");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Comment", b =>
@@ -109,7 +112,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("ReferenceType", "ReferenceId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Community", b =>
@@ -149,7 +152,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.ToTable("Communities", (string)null);
+                    b.ToTable("Communities");
 
                     b.HasData(
                         new
@@ -238,7 +241,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CommunityPosts", (string)null);
+                    b.ToTable("CommunityPosts");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Contest", b =>
@@ -289,7 +292,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("WinnerEntryId");
 
-                    b.ToTable("Contests", (string)null);
+                    b.ToTable("Contests");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.ContestEntry", b =>
@@ -319,7 +322,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("ContestId", "VideoId")
                         .IsUnique();
 
-                    b.ToTable("ContestEntries", (string)null);
+                    b.ToTable("ContestEntries");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.ContestVote", b =>
@@ -349,7 +352,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("ContestEntryId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("ContestVotes", (string)null);
+                    b.ToTable("ContestVotes");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Follow", b =>
@@ -379,7 +382,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("FollowerId", "FollowingId")
                         .IsUnique();
 
-                    b.ToTable("Follows", (string)null);
+                    b.ToTable("Follows");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.JwtDenylist", b =>
@@ -408,7 +411,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("Jti");
 
-                    b.ToTable("JwtDenylists", (string)null);
+                    b.ToTable("JwtDenylists");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Like", b =>
@@ -443,7 +446,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("ReferenceType", "ReferenceId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("Likes", (string)null);
+                    b.ToTable("Likes");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Message", b =>
@@ -481,7 +484,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Notification", b =>
@@ -522,7 +525,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Opportunity", b =>
@@ -571,7 +574,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.ToTable("Opportunities", (string)null);
+                    b.ToTable("Opportunities");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.OpportunityApplication", b =>
@@ -601,7 +604,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("OpportunityId", "ApplicantUserId")
                         .IsUnique();
 
-                    b.ToTable("OpportunityApplications", (string)null);
+                    b.ToTable("OpportunityApplications");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Province", b =>
@@ -628,7 +631,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Provinces", (string)null);
+                    b.ToTable("Provinces");
 
                     b.HasData(
                         new
@@ -901,7 +904,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("VideoId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("Ratings", (string)null);
+                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.RefreshToken", b =>
@@ -940,7 +943,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Report", b =>
@@ -988,7 +991,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("VideoId", "ReporterUserId")
                         .IsUnique();
 
-                    b.ToTable("Reports", (string)null);
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.User", b =>
@@ -1041,7 +1044,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
@@ -1116,7 +1119,7 @@ namespace TalentShowcase.Api.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserProfiles", (string)null);
+                    b.ToTable("UserProfiles");
 
                     b.HasData(
                         new
@@ -1172,7 +1175,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("UserId", "TokenType");
 
-                    b.ToTable("UserTokens", (string)null);
+                    b.ToTable("UserTokens");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Video", b =>
@@ -1226,7 +1229,7 @@ namespace TalentShowcase.Api.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Videos", (string)null);
+                    b.ToTable("Videos");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.VideoView", b =>
@@ -1257,7 +1260,7 @@ namespace TalentShowcase.Api.Data.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("VideoViews", (string)null);
+                    b.ToTable("VideoViews");
                 });
 
             modelBuilder.Entity("TalentShowcase.Api.Models.Entities.Achievement", b =>
