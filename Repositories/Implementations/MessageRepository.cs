@@ -72,6 +72,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Select(g => new { PartnerId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.PartnerId, x => x.Count);
 
+        public async Task<int> CountAllAsync() =>
+            await _dbSet.CountAsync();
+
         private IQueryable<Message> ConversationQuery(int userId, int otherUserId) =>
             _dbSet.Where(m =>
                 (m.SenderId == userId && m.ReceiverId == otherUserId) ||

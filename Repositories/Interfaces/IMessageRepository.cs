@@ -12,5 +12,6 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<int> CountConversationPartnersAsync(int userId);
         Task<Dictionary<int, Message>> GetLatestMessagesAsync(int userId, IEnumerable<int> partnerIds);
         Task<Dictionary<int, int>> CountUnreadByPartnersAsync(int userId, IEnumerable<int> partnerIds);
+        Task<int> CountAllAsync();
     }
 }

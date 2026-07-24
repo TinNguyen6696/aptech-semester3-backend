@@ -16,6 +16,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountByReferenceAsync(string referenceType, int referenceId) =>
             await _dbSet.CountAsync(l => l.ReferenceType == referenceType && l.ReferenceId == referenceId);
 
+        public async Task<int> CountByReferenceTypeAsync(string referenceType) =>
+            await _dbSet.CountAsync(l => l.ReferenceType == referenceType);
+
         public async Task<Dictionary<int, int>> CountByReferenceIdsAsync(string referenceType, IEnumerable<int> referenceIds) =>
             await _dbSet
                 .Where(l => l.ReferenceType == referenceType && referenceIds.Contains(l.ReferenceId))

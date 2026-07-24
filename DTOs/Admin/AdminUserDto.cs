@@ -12,6 +12,7 @@ namespace TalentShowcase.Api.DTOs.Admin
         public bool EmailConfirmed { get; set; }
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
+        public string? ProfileImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

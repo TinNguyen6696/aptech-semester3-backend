@@ -1,6 +1,7 @@
 using TalentShowcase.Api.Common;
 using TalentShowcase.Api.DTOs.Admin;
 using TalentShowcase.Api.DTOs.Comments;
+using TalentShowcase.Api.Models.Constants;
 using TalentShowcase.Api.Models.Entities;
 using TalentShowcase.Api.Models.Enums;
 using TalentShowcase.Api.Repositories.Interfaces;
@@ -22,6 +23,8 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ICommunityPostRepository _communityPostRepo;
         private readonly IRefreshTokenRepository _refreshTokenRepo;
         private readonly IVideoViewRepository _videoViewRepo;
+        private readonly ILikeRepository _likeRepo;
+        private readonly IMessageRepository _messageRepo;
 
         public AdminService(
             IUserRepository userRepo,
@@ -31,7 +34,9 @@ namespace TalentShowcase.Api.Services.Implementations
             IOpportunityRepository opportunityRepo,
             ICommunityPostRepository communityPostRepo,
             IRefreshTokenRepository refreshTokenRepo,
-            IVideoViewRepository videoViewRepo)
+            IVideoViewRepository videoViewRepo,
+            ILikeRepository likeRepo,
+            IMessageRepository messageRepo)
         {
             _userRepo = userRepo;
             _videoRepo = videoRepo;
@@ -41,37 +46,55 @@ namespace TalentShowcase.Api.Services.Implementations
             _communityPostRepo = communityPostRepo;
             _refreshTokenRepo = refreshTokenRepo;
             _videoViewRepo = videoViewRepo;
+            _likeRepo = likeRepo;
+            _messageRepo = messageRepo;
         }
 
         public async Task<Result<AdminDashboardDto>> GetDashboardAsync()
         {
             var roleCounts = await _userRepo.CountByRoleAsync();
+            var totalUsers = roleCounts.Values.Sum();
+            var activeUsers = await _userRepo.CountActiveAsync();
+
+            var weekAgo = DateTime.UtcNow.AddDays(-RecentDays);
+            var monthAgo = DateTime.UtcNow.AddMonths(-1);
+            var newUsersThisWeek = await _userRepo.CountCreatedSinceAsync(weekAgo);
+            var newUsersThisMonth = await _userRepo.CountCreatedSinceAsync(monthAgo);
+            var newVideosThisWeek = await _videoRepo.CountCreatedSinceAsync(weekAgo);
+
             var totalVideos = await _videoRepo.CountAllAsync();
             var totalViews = await _videoViewRepo.CountAllAsync();
+            var totalLikes = await _likeRepo.CountByReferenceTypeAsync(ReferenceTypes.Video);
+
             var totalContests = await _contestRepo.CountPublicAsync(null);
+            var endedContests = await _contestRepo.CountEndedAsync();
+
             var totalOpportunities = await _opportunityRepo.CountPublicAsync(null, null);
             var totalCommunityPosts = await _communityPostRepo.CountAllAsync();
-
-            var since = DateTime.UtcNow.AddDays(-RecentDays);
-            var newUsers = await _userRepo.CountCreatedSinceAsync(since);
-            var newVideos = await _videoRepo.CountCreatedSinceAsync(since);
+            var totalMessages = await _messageRepo.CountAllAsync();
 
             var recentUsers = await _userRepo.GetAllPagedAsync(null, 1, RecentUsersCount);
 
             var dto = new AdminDashboardDto
             {
-                TotalUsers = roleCounts.Values.Sum(),
+                TotalUsers = totalUsers,
+                ActiveUsers = activeUsers,
+                BannedUsers = totalUsers - activeUsers,
                 MemberCount = roleCounts.GetValueOrDefault(UserRole.Member),
                 MentorCount = roleCounts.GetValueOrDefault(UserRole.Mentor),
                 RecruiterCount = roleCounts.GetValueOrDefault(UserRole.Recruiter),
                 AdminCount = roleCounts.GetValueOrDefault(UserRole.Admin),
                 TotalVideos = totalVideos,
                 TotalViews = totalViews,
+                TotalLikes = totalLikes,
                 TotalContests = totalContests,
+                EndedContests = endedContests,
                 TotalOpportunities = totalOpportunities,
                 TotalCommunityPosts = totalCommunityPosts,
-                NewUsersLast7Days = newUsers,
-                NewVideosLast7Days = newVideos,
+                TotalMessages = totalMessages,
+                NewUsersLast7Days = newUsersThisWeek,
+                NewUsersThisMonth = newUsersThisMonth,
+                NewVideosLast7Days = newVideosThisWeek,
                 RecentUsers = recentUsers.Select(ToDto)
             };
 
@@ -202,6 +225,7 @@ namespace TalentShowcase.Api.Services.Implementations
             EmailConfirmed = user.EmailConfirmed,
             FirstName = user.Profile?.FirstName,
             LastName = user.Profile?.LastName,
+            ProfileImageUrl = user.Profile?.ProfileImageUrl,
             CreatedAt = user.CreatedAt
         };
 

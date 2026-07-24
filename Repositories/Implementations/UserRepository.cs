@@ -59,6 +59,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountCreatedSinceAsync(DateTime since) =>
             await _dbSet.CountAsync(u => u.CreatedAt >= since);
 
+        public async Task<int> CountActiveAsync() =>
+            await _dbSet.CountAsync(u => u.IsActive);
+
         public async Task<IEnumerable<User>> GetActiveByRolePagedAsync(UserRole role, TalentCategory? category, SkillLevel? skillLevel, int? provinceId, string? search, int page, int pageSize) =>
             await ActiveRoleQuery(role, category, skillLevel, provinceId, search)
                 .OrderByDescending(u => u.CreatedAt)

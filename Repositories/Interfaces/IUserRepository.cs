@@ -18,5 +18,6 @@ namespace TalentShowcase.Api.Repositories.Interfaces
         Task<int> CountActiveByRoleAsync(UserRole role, TalentCategory? category, SkillLevel? skillLevel, int? provinceId, string? search);
         Task<Dictionary<UserRole, int>> CountByRoleAsync();
         Task<int> CountCreatedSinceAsync(DateTime since);
+        Task<int> CountActiveAsync();
     }
 }

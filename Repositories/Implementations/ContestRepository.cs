@@ -20,6 +20,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountPublicAsync(TalentCategory? category) =>
             await Query(category).CountAsync();
 
+        public async Task<int> CountEndedAsync() =>
+            await _dbSet.CountAsync(c => c.EndDate < DateTime.UtcNow);
+
         private IQueryable<Contest> Query(TalentCategory? category)
         {
             var query = _dbSet.AsQueryable();

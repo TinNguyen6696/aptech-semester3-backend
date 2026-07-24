@@ -7,5 +7,6 @@ namespace TalentShowcase.Api.Repositories.Interfaces
     {
         Task<IEnumerable<Contest>> GetPublicAsync(TalentCategory? category, int page, int pageSize);
         Task<int> CountPublicAsync(TalentCategory? category);
+        Task<int> CountEndedAsync();
     }
 }
