@@ -4,5 +4,6 @@ namespace TalentShowcase.Api.Services.Interfaces
     {
         Task SendEmailVerificationAsync(string toEmail, string username, string verifyUrl);
         Task SendPasswordResetAsync(string toEmail, string username, string resetUrl);
+        Task SendContestWinnerAsync(string toEmail, string username, string contestTitle);
     }
 }

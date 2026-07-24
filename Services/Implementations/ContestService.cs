@@ -121,6 +121,15 @@ namespace TalentShowcase.Api.Services.Implementations
             if (contest == null)
                 return new Result<object> { IsSuccess = false, Message = "Contest not found.", StatusCode = 404 };
 
+            // WinnerEntryId -> ContestEntry is Restrict (see ContestConfiguration) to avoid a
+            // cascade cycle back to Contest, so it must be cleared before the entries cascade-delete.
+            if (contest.WinnerEntryId.HasValue)
+            {
+                contest.WinnerEntryId = null;
+                _contestRepo.Update(contest);
+                await _contestRepo.SaveChangesAsync();
+            }
+
             _contestRepo.Remove(contest);
             await _contestRepo.SaveChangesAsync();
 
@@ -244,6 +253,15 @@ namespace TalentShowcase.Api.Services.Implementations
                     return new Result<object> { IsSuccess = false, Message = "This contest has ended; entries can no longer be withdrawn.", StatusCode = 400 };
             }
 
+            // Same Restrict-FK reasoning as DeleteContestAsync: clear the winner reference before
+            // removing the entry it points to, or the delete hits a DB-level FK violation.
+            if (entry.Contest.WinnerEntryId == entry.Id)
+            {
+                entry.Contest.WinnerEntryId = null;
+                _contestRepo.Update(entry.Contest);
+                await _contestRepo.SaveChangesAsync();
+            }
+
             _entryRepo.Remove(entry);
             await _entryRepo.SaveChangesAsync();
 
@@ -285,6 +303,7 @@ namespace TalentShowcase.Api.Services.Implementations
             StartDate = contest.StartDate,
             EndDate = contest.EndDate,
             EntryCount = entryCount,
+            WinnerEntryId = contest.WinnerEntryId,
             CreatedAt = contest.CreatedAt
         };
 

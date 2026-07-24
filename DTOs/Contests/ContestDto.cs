@@ -11,6 +11,7 @@ namespace TalentShowcase.Api.DTOs.Contests
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public int EntryCount { get; set; }
+        public int? WinnerEntryId { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

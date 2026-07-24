@@ -24,5 +24,10 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .GroupBy(r => r.VideoId)
                 .Select(g => new { VideoId = g.Key, Average = g.Average(r => r.Score) })
                 .ToDictionaryAsync(x => x.VideoId, x => x.Average);
+
+        public async Task<Dictionary<int, int>> GetScoresByVideoIdsAsync(IEnumerable<int> videoIds, int userId) =>
+            await _dbSet
+                .Where(r => r.UserId == userId && videoIds.Contains(r.VideoId))
+                .ToDictionaryAsync(r => r.VideoId, r => r.Score);
     }
 }

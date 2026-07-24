@@ -37,6 +37,16 @@ namespace TalentShowcase.Api.Services.Implementations
             return SendAsync(toEmail, "Reset your Talent Showcase password", body);
         }
 
+        public Task SendContestWinnerAsync(string toEmail, string username, string contestTitle)
+        {
+            var body =
+                $"<p>Hi {username},</p>" +
+                $"<p>Congratulations! Your entry won the contest <strong>{contestTitle}</strong> with the most votes.</p>" +
+                "<p>Log in to Talent Showcase to see your result.</p>";
+
+            return SendAsync(toEmail, $"You won \"{contestTitle}\"!", body);
+        }
+
         private async Task SendAsync(string toEmail, string subject, string htmlBody)
         {
             var message = new MimeMessage();

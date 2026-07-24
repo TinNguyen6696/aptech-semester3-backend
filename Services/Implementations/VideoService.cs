@@ -244,7 +244,11 @@ namespace TalentShowcase.Api.Services.Implementations
                 ? await _reportRepo.ExistsAsync(videoId, currentUserId.Value)
                 : null;
 
-            return new VideoStats(viewCount, likeCount, commentCount, averageRating, isLiked, isReported);
+            int? myRating = currentUserId.HasValue
+                ? (await _ratingRepo.GetByVideoAndUserAsync(videoId, currentUserId.Value))?.Score
+                : null;
+
+            return new VideoStats(viewCount, likeCount, commentCount, averageRating, isLiked, isReported, myRating);
         }
 
         private async Task<Dictionary<int, VideoStats>> GetStatsBatchAsync(IEnumerable<int> videoIds, int? currentUserId)
@@ -264,13 +268,18 @@ namespace TalentShowcase.Api.Services.Implementations
                 ? await _reportRepo.GetReportedVideoIdsAsync(ids, currentUserId.Value)
                 : null;
 
+            var myScores = currentUserId.HasValue
+                ? await _ratingRepo.GetScoresByVideoIdsAsync(ids, currentUserId.Value)
+                : null;
+
             return ids.ToDictionary(id => id, id => new VideoStats(
                 viewCounts.GetValueOrDefault(id),
                 likeCounts.GetValueOrDefault(id),
                 commentCounts.GetValueOrDefault(id),
                 averageRatings.TryGetValue(id, out var avg) ? avg : null,
                 likedIds == null ? null : likedIds.Contains(id),
-                reportedIds == null ? null : reportedIds.Contains(id)));
+                reportedIds == null ? null : reportedIds.Contains(id),
+                myScores != null && myScores.TryGetValue(id, out var score) ? score : null));
         }
 
         private static VideoDto ToDto(Video video, VideoStats stats) => new VideoDto
@@ -288,6 +297,7 @@ namespace TalentShowcase.Api.Services.Implementations
             IsLiked = stats.IsLiked,
             CommentCount = stats.CommentCount,
             AverageRating = stats.AverageRating,
+            MyRating = stats.MyRating,
             IsReported = stats.IsReported,
             CreatedAt = video.CreatedAt
         };
@@ -305,6 +315,7 @@ namespace TalentShowcase.Api.Services.Implementations
             IsLiked = stats.IsLiked,
             CommentCount = stats.CommentCount,
             AverageRating = stats.AverageRating,
+            MyRating = stats.MyRating,
             IsReported = stats.IsReported,
             CreatedAt = video.CreatedAt,
             Owner = new VideoOwnerDto
@@ -319,9 +330,9 @@ namespace TalentShowcase.Api.Services.Implementations
             }
         };
 
-        private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating, bool? IsLiked, bool? IsReported)
+        private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating, bool? IsLiked, bool? IsReported, int? MyRating)
         {
-            public static readonly VideoStats Empty = new(0, 0, 0, null, null, null);
+            public static readonly VideoStats Empty = new(0, 0, 0, null, null, null, null);
         }
     }
 }

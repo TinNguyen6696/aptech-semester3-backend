@@ -23,6 +23,11 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountEndedAsync() =>
             await _dbSet.CountAsync(c => c.EndDate < DateTime.UtcNow);
 
+        public async Task<IEnumerable<Contest>> GetEndedUnprocessedAsync() =>
+            await _dbSet
+                .Where(c => c.EndDate < DateTime.UtcNow && c.WinnerAnnouncedAt == null)
+                .ToListAsync();
+
         private IQueryable<Contest> Query(TalentCategory? category)
         {
             var query = _dbSet.AsQueryable();

@@ -62,6 +62,8 @@ namespace TalentShowcase.Api.Extensions
             services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IReportService, ReportService>();
 
+            services.AddHostedService<ContestWinnerAnnouncerService>();
+
             return services;
         }
     }

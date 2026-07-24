@@ -25,6 +25,16 @@ namespace TalentShowcase.Api.Data.Configurations
                 .WithMany()
                 .HasForeignKey(c => c.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Restrict, not Cascade/SetNull: ContestEntry.ContestId already cascades FROM Contest,
+            // so a second auto-action (Cascade or SetNull) on this reverse WinnerEntryId FK would
+            // create a cycle back to Contest — SQL Server rejects that at migration time. The
+            // service layer clears WinnerEntryId before deleting a contest, so this never blocks
+            // a real deletion.
+            builder.HasOne(c => c.WinnerEntry)
+                .WithMany()
+                .HasForeignKey(c => c.WinnerEntryId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

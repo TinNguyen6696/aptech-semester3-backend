@@ -15,6 +15,7 @@ namespace TalentShowcase.Api.DTOs.Videos
         public bool? IsLiked { get; set; }
         public int CommentCount { get; set; }
         public double? AverageRating { get; set; }
+        public int? MyRating { get; set; }
         public bool? IsReported { get; set; }
         public DateTime CreatedAt { get; set; }
         public VideoOwnerDto Owner { get; set; } = null!;

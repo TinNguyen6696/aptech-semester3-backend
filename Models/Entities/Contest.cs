@@ -10,7 +10,10 @@ namespace TalentShowcase.Api.Models.Entities
         public int CreatedByUserId { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public int? WinnerEntryId { get; set; }
+        public DateTime? WinnerAnnouncedAt { get; set; }
 
         public User CreatedByUser { get; set; } = null!;
+        public ContestEntry? WinnerEntry { get; set; }
     }
 }
