@@ -146,10 +146,11 @@ namespace TalentShowcase.Api.Services.Implementations
             if (video == null || (video.UserId != userId && !isAdmin))
                 return new Result<object> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
 
-            // No bypass for Admin here either — the contest lock is a single, permanent rule.
-            // If a reported video is also in a contest, Admin must remove the contest entry via
-            // DELETE /api/contests/{id}/entries/{entryId} first, then delete the video normally.
-            if (await _contestEntryRepo.ExistsForVideoAsync(videoId))
+            // The contest lock guards live contest history, so it does NOT apply once an admin has
+            // removed the video: a removed video is already filtered out of every contest listing,
+            // yet it still occupies one of the owner's MaxVideosPerUser slots (deliberate). Keeping
+            // it undeletable would leave the owner permanently short a slot with no way to reclaim it.
+            if (!video.IsRemovedByAdmin && await _contestEntryRepo.ExistsForVideoAsync(videoId))
                 return new Result<object> { IsSuccess = false, Message = "This video has been entered into a contest and can no longer be deleted.", StatusCode = 400 };
 
             // Likes/Comments are polymorphic (no DB-level FK to Video), so they're cleaned up here
@@ -157,6 +158,28 @@ namespace TalentShowcase.Api.Services.Implementations
             // with cascade delete, so the DB handles those automatically.
             await using (var transaction = await _context.Database.BeginTransactionAsync())
             {
+                // A removed-by-admin video skips the lock above, so its contest entries have to be
+                // cleared here — ContestEntry.VideoId is Restrict, so the video delete would fail at
+                // the DB otherwise. Same two-step Restrict dance as ContestService.WithdrawEntryAsync:
+                // null any Contest.WinnerEntryId pointing at these entries and flush that FIRST, then
+                // remove the entries. ContestVote cascades off ContestEntry on its own.
+                if (video.IsRemovedByAdmin)
+                {
+                    var entries = await _contestEntryRepo.GetByVideoIdWithContestAsync(videoId);
+                    if (entries.Count > 0)
+                    {
+                        foreach (var entry in entries.Where(e => e.Contest.WinnerEntryId == e.Id))
+                            entry.Contest.WinnerEntryId = null;
+
+                        await _contestEntryRepo.SaveChangesAsync();
+
+                        foreach (var entry in entries)
+                            _contestEntryRepo.Remove(entry);
+
+                        await _contestEntryRepo.SaveChangesAsync();
+                    }
+                }
+
                 // Clear likes ON the video's comments before deleting those comments — comment-likes
                 // are polymorphic too, so nothing cascades them.
                 var commentIds = await _commentRepo.GetIdsByReferenceAsync(ReferenceTypes.Video, videoId);

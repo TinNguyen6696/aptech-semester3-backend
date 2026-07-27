@@ -12,6 +12,15 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<bool> ExistsForVideoAsync(int videoId) =>
             await _dbSet.AnyAsync(e => e.VideoId == videoId);
 
+        // Every entry this video has, Contest included — needed when deleting a removed-by-admin
+        // video: Contest.WinnerEntryId is a Restrict FK, so it has to be cleared before the entry
+        // rows themselves can go.
+        public async Task<List<ContestEntry>> GetByVideoIdWithContestAsync(int videoId) =>
+            await _dbSet
+                .Include(e => e.Contest)
+                .Where(e => e.VideoId == videoId)
+                .ToListAsync();
+
         public async Task<ContestEntry?> GetAsync(int contestId, int videoId) =>
             await _dbSet.FirstOrDefaultAsync(e => e.ContestId == contestId && e.VideoId == videoId);
 

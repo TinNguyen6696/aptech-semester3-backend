@@ -5,6 +5,7 @@ namespace TalentShowcase.Api.Repositories.Interfaces
     public interface IContestEntryRepository : IGenericRepository<ContestEntry>
     {
         Task<bool> ExistsForVideoAsync(int videoId);
+        Task<List<ContestEntry>> GetByVideoIdWithContestAsync(int videoId);
         Task<ContestEntry?> GetAsync(int contestId, int videoId);
         Task<ContestEntry?> GetByIdWithDetailsAsync(int entryId);
         Task<IEnumerable<ContestEntry>> GetByContestIdAsync(int contestId, int page, int pageSize);
