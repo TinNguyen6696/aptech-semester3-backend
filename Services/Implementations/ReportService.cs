@@ -135,12 +135,16 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = report.ReporterUser.Id,
                 Username = report.ReporterUser.Username,
+                FirstName = report.ReporterUser.Profile?.FirstName,
+                LastName = report.ReporterUser.Profile?.LastName,
                 ProfileImageUrl = report.ReporterUser.Profile?.ProfileImageUrl
             },
             ReviewedBy = report.ReviewedByUser == null ? null : new CommentAuthorDto
             {
                 Id = report.ReviewedByUser.Id,
                 Username = report.ReviewedByUser.Username,
+                FirstName = report.ReviewedByUser.Profile?.FirstName,
+                LastName = report.ReviewedByUser.Profile?.LastName,
                 ProfileImageUrl = report.ReviewedByUser.Profile?.ProfileImageUrl
             }
         };

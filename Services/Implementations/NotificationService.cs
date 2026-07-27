@@ -42,6 +42,34 @@ namespace TalentShowcase.Api.Services.Implementations
             }
         }
 
+        public async Task CreateManyAsync(IEnumerable<int> recipientUserIds, string content, string? referenceType, int? referenceId)
+        {
+            var ids = recipientUserIds.ToList();
+            if (ids.Count == 0)
+                return;
+
+            try
+            {
+                var notifications = ids.Select(userId => new Notification
+                {
+                    UserId = userId,
+                    Content = content,
+                    ReferenceType = referenceType,
+                    ReferenceId = referenceId,
+                    IsRead = false
+                });
+
+                await _notificationRepo.AddRangeAsync(notifications);
+                await _notificationRepo.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Best-effort, same reasoning as CreateAsync: the post/video/opportunity that
+                // triggered this already saved successfully, a fan-out failure must not undo that.
+                _logger.LogWarning(ex, "Failed to fan out notifications to {Count} followers", ids.Count);
+            }
+        }
+
         public async Task<Result<NotificationListDto>> GetMyNotificationsAsync(int userId, int page, int pageSize)
         {
             if (page < 1)

@@ -191,6 +191,8 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = comment.User.Id,
                 Username = comment.User.Username,
+                FirstName = comment.User.Profile?.FirstName,
+                LastName = comment.User.Profile?.LastName,
                 ProfileImageUrl = comment.User.Profile?.ProfileImageUrl
             }
         };

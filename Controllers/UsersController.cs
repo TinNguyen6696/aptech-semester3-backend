@@ -17,13 +17,15 @@ namespace TalentShowcase.Api.Controllers
         private readonly IFileUploadService _fileUploadService;
         private readonly IVideoService _videoService;
         private readonly IFollowService _followService;
+        private readonly IOpportunityService _opportunityService;
 
-        public UsersController(IUserService userService, IFileUploadService fileUploadService, IVideoService videoService, IFollowService followService)
+        public UsersController(IUserService userService, IFileUploadService fileUploadService, IVideoService videoService, IFollowService followService, IOpportunityService opportunityService)
         {
             _userService = userService;
             _fileUploadService = fileUploadService;
             _videoService = videoService;
             _followService = followService;
+            _opportunityService = opportunityService;
         }
 
         [HttpGet("me")]
@@ -62,6 +64,14 @@ namespace TalentShowcase.Api.Controllers
         public async Task<IActionResult> GetUserPublicVideos(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
             var result = await _videoService.GetPublicVideosByUserAsync(id, page, pageSize, CurrentUserIdOrNull);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("{id:int}/opportunities")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetUserOpportunities(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        {
+            var result = await _opportunityService.GetOpportunitiesByUserAsync(id, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

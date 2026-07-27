@@ -38,6 +38,20 @@ namespace TalentShowcase.Api.Repositories.Implementations
         public async Task<int> CountByUserIdAsync(int userId) =>
             await Query(null, null, userId).CountAsync();
 
+        // Public "view this recruiter's postings" (e.g. from their profile page) — unlike
+        // GetByUserIdAsync (used for the recruiter's own "mine" list), this excludes banned
+        // posters, same as GetPublicAsync/GetByIdWithDetailsAsync.
+        public async Task<IEnumerable<Opportunity>> GetPublicByUserIdAsync(int userId, int page, int pageSize) =>
+            await Query(null, null, userId)
+                .Where(o => o.PostedByUser.IsActive)
+                .OrderByDescending(o => o.PostedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+        public async Task<int> CountPublicByUserIdAsync(int userId) =>
+            await Query(null, null, userId).Where(o => o.PostedByUser.IsActive).CountAsync();
+
         private IQueryable<Opportunity> Query(TalentCategory? category, int? provinceId, int? postedByUserId)
         {
             var query = _dbSet

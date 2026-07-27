@@ -60,6 +60,7 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = user.Id,
                 Username = user.Username,
+                Role = user.Role,
                 FirstName = user.Profile!.FirstName,
                 LastName = user.Profile.LastName,
                 Bio = user.Profile.Bio,

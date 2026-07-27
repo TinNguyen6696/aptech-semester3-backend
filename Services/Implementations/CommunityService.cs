@@ -17,6 +17,8 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly ICommunityPostRepository _postRepo;
         private readonly ILikeRepository _likeRepo;
         private readonly ICommentRepository _commentRepo;
+        private readonly IFollowRepository _followRepo;
+        private readonly INotificationService _notificationService;
         private readonly AppDbContext _context;
 
         public CommunityService(
@@ -24,12 +26,16 @@ namespace TalentShowcase.Api.Services.Implementations
             ICommunityPostRepository postRepo,
             ILikeRepository likeRepo,
             ICommentRepository commentRepo,
+            IFollowRepository followRepo,
+            INotificationService notificationService,
             AppDbContext context)
         {
             _communityRepo = communityRepo;
             _postRepo = postRepo;
             _likeRepo = likeRepo;
             _commentRepo = commentRepo;
+            _followRepo = followRepo;
+            _notificationService = notificationService;
             _context = context;
         }
 
@@ -126,6 +132,15 @@ namespace TalentShowcase.Api.Services.Implementations
             await _postRepo.SaveChangesAsync();
 
             var created = await _postRepo.GetByIdWithUserAsync(post.Id);
+
+            var followerIds = await _followRepo.GetAllFollowerIdsAsync(userId);
+            if (followerIds.Count > 0)
+                await _notificationService.CreateManyAsync(
+                    followerIds,
+                    $"{created!.User.Username} posted in a community.",
+                    ReferenceTypes.CommunityPost,
+                    post.Id);
+
             return new Result<CommunityPostDto> { Data = ToDto(created!, 0, 0, false), IsSuccess = true, Message = "Post added successfully.", StatusCode = 201 };
         }
 
@@ -194,6 +209,8 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = post.User.Id,
                 Username = post.User.Username,
+                FirstName = post.User.Profile?.FirstName,
+                LastName = post.User.Profile?.LastName,
                 ProfileImageUrl = post.User.Profile?.ProfileImageUrl
             }
         };

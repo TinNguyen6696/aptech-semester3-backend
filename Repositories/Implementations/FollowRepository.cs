@@ -45,6 +45,14 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Take(pageSize)
                 .ToListAsync();
 
+        // Unpaginated — used for fan-out notifications (e.g. "someone you follow posted"),
+        // not for any list the user browses, so no page/pageSize needed here.
+        public async Task<List<int>> GetAllFollowerIdsAsync(int userId) =>
+            await _dbSet
+                .Where(f => f.FollowingId == userId)
+                .Select(f => f.FollowerId)
+                .ToListAsync();
+
         public async Task<IEnumerable<Follow>> GetFollowingAsync(int userId, int page, int pageSize) =>
             await _dbSet
                 .Include(f => f.Following)

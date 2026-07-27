@@ -241,6 +241,8 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = video.User.Id,
                 Username = video.User.Username,
+                FirstName = video.User.Profile?.FirstName,
+                LastName = video.User.Profile?.LastName,
                 ProfileImageUrl = video.User.Profile?.ProfileImageUrl
             }
         };
@@ -256,6 +258,8 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = comment.User.Id,
                 Username = comment.User.Username,
+                FirstName = comment.User.Profile?.FirstName,
+                LastName = comment.User.Profile?.LastName,
                 ProfileImageUrl = comment.User.Profile?.ProfileImageUrl
             }
         };

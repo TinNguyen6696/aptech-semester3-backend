@@ -23,6 +23,8 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IContestEntryRepository _contestEntryRepo;
         private readonly IReportRepository _reportRepo;
         private readonly IFollowRepository _followRepo;
+        private readonly INotificationService _notificationService;
+        private readonly IUserRepository _userRepo;
         private readonly AppDbContext _context;
 
         public VideoService(
@@ -35,6 +37,8 @@ namespace TalentShowcase.Api.Services.Implementations
             IContestEntryRepository contestEntryRepo,
             IReportRepository reportRepo,
             IFollowRepository followRepo,
+            INotificationService notificationService,
+            IUserRepository userRepo,
             AppDbContext context)
         {
             _videoRepo = videoRepo;
@@ -46,6 +50,8 @@ namespace TalentShowcase.Api.Services.Implementations
             _contestEntryRepo = contestEntryRepo;
             _reportRepo = reportRepo;
             _followRepo = followRepo;
+            _notificationService = notificationService;
+            _userRepo = userRepo;
             _context = context;
         }
 
@@ -86,6 +92,21 @@ namespace TalentShowcase.Api.Services.Implementations
 
             await _videoRepo.AddAsync(video);
             await _videoRepo.SaveChangesAsync();
+
+            if (video.Visibility == VideoVisibility.Public)
+            {
+                var followerIds = await _followRepo.GetAllFollowerIdsAsync(userId);
+                if (followerIds.Count > 0)
+                {
+                    var poster = await _userRepo.GetByIdAsync(userId);
+                    if (poster != null)
+                        await _notificationService.CreateManyAsync(
+                            followerIds,
+                            $"{poster.Username} posted a new video.",
+                            ReferenceTypes.Video,
+                            video.Id);
+                }
+            }
 
             return new Result<VideoDto> { Data = ToDto(video, VideoStats.Empty with { IsLiked = false, IsReported = false }), IsSuccess = true, Message = "Video added successfully.", StatusCode = 201 };
         }

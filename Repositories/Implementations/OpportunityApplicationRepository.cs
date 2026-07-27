@@ -24,5 +24,15 @@ namespace TalentShowcase.Api.Repositories.Implementations
 
         public async Task<int> CountByOpportunityIdAsync(int opportunityId) =>
             await _dbSet.CountAsync(a => a.OpportunityId == opportunityId);
+
+        public async Task<HashSet<int>> GetAppliedOpportunityIdsAsync(IEnumerable<int> opportunityIds, int applicantUserId)
+        {
+            var applied = await _dbSet
+                .Where(a => a.ApplicantUserId == applicantUserId && opportunityIds.Contains(a.OpportunityId))
+                .Select(a => a.OpportunityId)
+                .ToListAsync();
+
+            return applied.ToHashSet();
+        }
     }
 }

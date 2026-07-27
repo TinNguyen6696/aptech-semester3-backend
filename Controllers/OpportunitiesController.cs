@@ -21,7 +21,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetOpportunities([FromQuery] TalentCategory? category, [FromQuery] int? provinceId, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _opportunityService.GetOpportunitiesAsync(category, provinceId, page, pageSize);
+            var result = await _opportunityService.GetOpportunitiesAsync(category, provinceId, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 
@@ -37,7 +37,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetOpportunity(int id)
         {
-            var result = await _opportunityService.GetOpportunityByIdAsync(id);
+            var result = await _opportunityService.GetOpportunityByIdAsync(id, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

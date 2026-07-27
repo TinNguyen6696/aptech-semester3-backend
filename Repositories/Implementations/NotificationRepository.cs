@@ -17,6 +17,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
                 .Take(pageSize)
                 .ToListAsync();
 
+        public async Task AddRangeAsync(IEnumerable<Notification> notifications) =>
+            await _dbSet.AddRangeAsync(notifications);
+
         public async Task<int> CountByUserIdAsync(int userId) =>
             await _dbSet.CountAsync(n => n.UserId == userId);
 

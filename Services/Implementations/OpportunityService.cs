@@ -18,22 +18,25 @@ namespace TalentShowcase.Api.Services.Implementations
         private readonly IOpportunityApplicationRepository _applicationRepo;
         private readonly INotificationService _notificationService;
         private readonly IUserRepository _userRepo;
+        private readonly IFollowRepository _followRepo;
 
         public OpportunityService(
             IOpportunityRepository opportunityRepo,
             IGenericRepository<Province> provinceRepo,
             IOpportunityApplicationRepository applicationRepo,
             INotificationService notificationService,
-            IUserRepository userRepo)
+            IUserRepository userRepo,
+            IFollowRepository followRepo)
         {
             _opportunityRepo = opportunityRepo;
             _provinceRepo = provinceRepo;
             _applicationRepo = applicationRepo;
             _notificationService = notificationService;
             _userRepo = userRepo;
+            _followRepo = followRepo;
         }
 
-        public async Task<Result<OpportunityListDto>> GetOpportunitiesAsync(TalentCategory? category, int? provinceId, int page, int pageSize)
+        public async Task<Result<OpportunityListDto>> GetOpportunitiesAsync(TalentCategory? category, int? provinceId, int page, int pageSize, int? currentUserId)
         {
             if (category.HasValue && !Enum.IsDefined(category.Value))
                 return new Result<OpportunityListDto> { IsSuccess = false, Message = "Invalid category.", StatusCode = 400 };
@@ -45,11 +48,15 @@ namespace TalentShowcase.Api.Services.Implementations
                 return new Result<OpportunityListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
 
             var totalCount = await _opportunityRepo.CountPublicAsync(category, provinceId);
-            var opportunities = await _opportunityRepo.GetPublicAsync(category, provinceId, page, pageSize);
+            var opportunities = (await _opportunityRepo.GetPublicAsync(category, provinceId, page, pageSize)).ToList();
+
+            var appliedIds = currentUserId.HasValue
+                ? await _applicationRepo.GetAppliedOpportunityIdsAsync(opportunities.Select(o => o.Id), currentUserId.Value)
+                : null;
 
             var result = new OpportunityListDto
             {
-                Opportunities = opportunities.Select(ToDto),
+                Opportunities = opportunities.Select(o => ToDto(o, appliedIds == null ? null : appliedIds.Contains(o.Id))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -59,13 +66,17 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<OpportunityListDto> { Data = result, IsSuccess = true, Message = "Opportunities retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<OpportunityDto>> GetOpportunityByIdAsync(int id)
+        public async Task<Result<OpportunityDto>> GetOpportunityByIdAsync(int id, int? currentUserId)
         {
             var opportunity = await _opportunityRepo.GetByIdWithDetailsAsync(id);
             if (opportunity == null)
                 return new Result<OpportunityDto> { IsSuccess = false, Message = "Opportunity not found.", StatusCode = 404 };
 
-            return new Result<OpportunityDto> { Data = ToDto(opportunity), IsSuccess = true, Message = "Opportunity retrieved successfully.", StatusCode = 200 };
+            bool? isApplied = currentUserId.HasValue
+                ? await _applicationRepo.ExistsAsync(id, currentUserId.Value)
+                : null;
+
+            return new Result<OpportunityDto> { Data = ToDto(opportunity, isApplied), IsSuccess = true, Message = "Opportunity retrieved successfully.", StatusCode = 200 };
         }
 
         public async Task<Result<OpportunityListDto>> GetMyOpportunitiesAsync(int userId, int page, int pageSize)
@@ -81,7 +92,34 @@ namespace TalentShowcase.Api.Services.Implementations
 
             var result = new OpportunityListDto
             {
-                Opportunities = opportunities.Select(ToDto),
+                Opportunities = opportunities.Select(o => ToDto(o)),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize)
+            };
+
+            return new Result<OpportunityListDto> { Data = result, IsSuccess = true, Message = "Opportunities retrieved successfully.", StatusCode = 200 };
+        }
+
+        public async Task<Result<OpportunityListDto>> GetOpportunitiesByUserAsync(int userId, int page, int pageSize, int? currentUserId)
+        {
+            if (page < 1)
+                return new Result<OpportunityListDto> { IsSuccess = false, Message = "Page must be at least 1.", StatusCode = 400 };
+
+            if (pageSize < 1 || pageSize > MaxPageSize)
+                return new Result<OpportunityListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
+
+            var totalCount = await _opportunityRepo.CountPublicByUserIdAsync(userId);
+            var opportunities = (await _opportunityRepo.GetPublicByUserIdAsync(userId, page, pageSize)).ToList();
+
+            var appliedIds = currentUserId.HasValue
+                ? await _applicationRepo.GetAppliedOpportunityIdsAsync(opportunities.Select(o => o.Id), currentUserId.Value)
+                : null;
+
+            var result = new OpportunityListDto
+            {
+                Opportunities = opportunities.Select(o => ToDto(o, appliedIds == null ? null : appliedIds.Contains(o.Id))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -117,6 +155,15 @@ namespace TalentShowcase.Api.Services.Implementations
             await _opportunityRepo.SaveChangesAsync();
 
             var created = await _opportunityRepo.GetByIdWithDetailsAsync(opportunity.Id);
+
+            var followerIds = await _followRepo.GetAllFollowerIdsAsync(userId);
+            if (followerIds.Count > 0)
+                await _notificationService.CreateManyAsync(
+                    followerIds,
+                    $"{created!.PostedByUser.Username} posted a new opportunity.",
+                    ReferenceTypes.Opportunity,
+                    opportunity.Id);
+
             return new Result<OpportunityDto> { Data = ToDto(created!), IsSuccess = true, Message = "Opportunity posted successfully.", StatusCode = 201 };
         }
 
@@ -229,13 +276,15 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = application.ApplicantUser.Id,
                 Username = application.ApplicantUser.Username,
+                FirstName = application.ApplicantUser.Profile?.FirstName,
+                LastName = application.ApplicantUser.Profile?.LastName,
                 ProfileImageUrl = application.ApplicantUser.Profile?.ProfileImageUrl,
                 PrimaryCategory = application.ApplicantUser.Profile?.PrimaryCategory,
                 SkillLevel = application.ApplicantUser.Profile?.SkillLevel
             }
         };
 
-        private static OpportunityDto ToDto(Opportunity opportunity) => new OpportunityDto
+        private static OpportunityDto ToDto(Opportunity opportunity, bool? isApplied = null) => new OpportunityDto
         {
             Id = opportunity.Id,
             Category = opportunity.Category,
@@ -246,11 +295,14 @@ namespace TalentShowcase.Api.Services.Implementations
             PostedAt = opportunity.PostedAt,
             ExpiresAt = opportunity.ExpiresAt,
             IsExpired = opportunity.ExpiresAt < DateTime.UtcNow,
+            IsApplied = isApplied,
             CreatedAt = opportunity.CreatedAt,
             PostedBy = new CommentAuthorDto
             {
                 Id = opportunity.PostedByUser.Id,
                 Username = opportunity.PostedByUser.Username,
+                FirstName = opportunity.PostedByUser.Profile?.FirstName,
+                LastName = opportunity.PostedByUser.Profile?.LastName,
                 ProfileImageUrl = opportunity.PostedByUser.Profile?.ProfileImageUrl
             }
         };

@@ -227,6 +227,13 @@ namespace TalentShowcase.Api.Services.Implementations
             if (video.Category != contest.Category)
                 return new Result<ContestEntryDto> { IsSuccess = false, Message = "This video's category does not match the contest's category.", StatusCode = 400 };
 
+            // Entries are listed publicly (GET /contests/{id}/entries is anonymous) and expose VideoUrl,
+            // so a Private video must never get in — that would leak it to anyone. Paired with the
+            // contest lock in VideoService.UpdateVideoAsync (which blocks flipping Visibility while an
+            // entry exists), this keeps "every entry points to a Public video" true for good.
+            if (video.Visibility != VideoVisibility.Public)
+                return new Result<ContestEntryDto> { IsSuccess = false, Message = "Only public videos can be entered into a contest.", StatusCode = 400 };
+
             if (await _entryRepo.GetAsync(contestId, video.Id) != null)
                 return new Result<ContestEntryDto> { IsSuccess = false, Message = "This video has already been entered into this contest.", StatusCode = 400 };
 
@@ -325,6 +332,8 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = entry.Video.User.Id,
                 Username = entry.Video.User.Username,
+                FirstName = entry.Video.User.Profile?.FirstName,
+                LastName = entry.Video.User.Profile?.LastName,
                 ProfileImageUrl = entry.Video.User.Profile?.ProfileImageUrl
             }
         };

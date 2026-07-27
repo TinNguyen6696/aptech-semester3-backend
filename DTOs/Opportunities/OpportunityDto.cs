@@ -14,6 +14,7 @@ namespace TalentShowcase.Api.DTOs.Opportunities
         public DateTime PostedAt { get; set; }
         public DateTime ExpiresAt { get; set; }
         public bool IsExpired { get; set; }
+        public bool? IsApplied { get; set; }
         public DateTime CreatedAt { get; set; }
         public CommentAuthorDto PostedBy { get; set; } = null!;
     }
