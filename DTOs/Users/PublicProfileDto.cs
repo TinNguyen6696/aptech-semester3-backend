@@ -7,6 +7,15 @@ namespace TalentShowcase.Api.DTOs.Users
     {
         public int Id { get; set; }
         public string Username { get; set; } = null!;
+
+        // Contact details: only populated for signed-in viewers, null for anonymous ones —
+        // this endpoint is [AllowAnonymous] over sequential int ids, so returning them
+        // unconditionally would let a bot walk /api/users/1..N and harvest every address.
+        // PhoneNumber is also null when the user simply never filled it in, so use Email
+        // as the "am I allowed to see contact info" flag.
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+
         public UserRole Role { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;

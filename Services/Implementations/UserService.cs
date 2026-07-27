@@ -60,6 +60,9 @@ namespace TalentShowcase.Api.Services.Implementations
             {
                 Id = user.Id,
                 Username = user.Username,
+                // Contact info is gated on being signed in — see PublicProfileDto for why.
+                Email = currentUserId.HasValue ? user.Email : null,
+                PhoneNumber = currentUserId.HasValue ? user.Profile!.PhoneNumber : null,
                 Role = user.Role,
                 FirstName = user.Profile!.FirstName,
                 LastName = user.Profile.LastName,
