@@ -74,6 +74,14 @@ namespace TalentShowcase.Api.Services.Implementations
             if (request.EndDate!.Value <= request.StartDate!.Value)
                 return new Result<ContestDto> { IsSuccess = false, Message = "End date must be after start date.", StatusCode = 400 };
 
+            // Create-only (deliberately NOT repeated in UpdateContestAsync): a contest whose EndDate
+            // has already passed is born dead — entries are refused, voting is refused, and the
+            // announcer just marks it processed. Applying this on update instead would make a
+            // finished contest permanently uneditable, the same trap opportunities are stuck in.
+            // StartDate is left unchecked on purpose so an admin can open a contest immediately.
+            if (request.EndDate!.Value <= DateTime.UtcNow)
+                return new Result<ContestDto> { IsSuccess = false, Message = "End date must be in the future.", StatusCode = 400 };
+
             var contest = new Contest
             {
                 CreatedByUserId = userId,
