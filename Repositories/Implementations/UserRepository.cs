@@ -8,6 +8,12 @@ namespace TalentShowcase.Api.Repositories.Implementations
 {
     public class UserRepository : GenericRepository<User>, IUserRepository
     {
+        // DB default collation (SQL_Latin1_General_CP1_CI_AS) is accent-sensitive, so "Phuong"
+        // would not match "Phương" without this. CI_AI (not a Vietnamese_* collation) is what
+        // correctly folds Vietnamese-specific letters (ư, ơ, đ) down to their base Latin letter —
+        // Vietnamese_CI_AI treats those as distinct alphabet letters and does NOT fold them.
+        private const string AccentInsensitiveCollation = "SQL_Latin1_General_CP1_CI_AI";
+
         public UserRepository(AppDbContext context) : base(context) { }
 
         public async Task<User?> GetByEmailAsync(string email) =>
@@ -90,9 +96,9 @@ namespace TalentShowcase.Api.Repositories.Implementations
 
             if (!string.IsNullOrWhiteSpace(search))
                 query = query.Where(u =>
-                    u.Username.Contains(search) ||
-                    u.Profile!.FirstName.Contains(search) ||
-                    u.Profile.LastName.Contains(search));
+                    EF.Functions.Collate(u.Username, AccentInsensitiveCollation).Contains(search) ||
+                    EF.Functions.Collate(u.Profile!.FirstName, AccentInsensitiveCollation).Contains(search) ||
+                    EF.Functions.Collate(u.Profile.LastName, AccentInsensitiveCollation).Contains(search));
 
             return query;
         }

@@ -66,7 +66,7 @@ namespace TalentShowcase.Api.Services.Implementations
             var totalViews = await _videoViewRepo.CountAllAsync();
             var totalLikes = await _likeRepo.CountByReferenceTypeAsync(ReferenceTypes.Video);
 
-            var totalContests = await _contestRepo.CountPublicAsync(null);
+            var totalContests = await _contestRepo.CountPublicAsync(null, null);
             var endedContests = await _contestRepo.CountEndedAsync();
 
             var totalOpportunities = await _opportunityRepo.CountPublicAsync(null, null);

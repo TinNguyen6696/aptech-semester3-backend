@@ -19,9 +19,9 @@ namespace TalentShowcase.Api.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetContests([FromQuery] TalentCategory? category, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
+        public async Task<IActionResult> GetContests([FromQuery] TalentCategory? category, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _contestService.GetContestsAsync(category, page, pageSize);
+            var result = await _contestService.GetContestsAsync(category, search, page, pageSize);
             return StatusCode(result.StatusCode, result);
         }
 

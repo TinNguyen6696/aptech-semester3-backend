@@ -29,7 +29,7 @@ namespace TalentShowcase.Api.Services.Implementations
             _videoRepo = videoRepo;
         }
 
-        public async Task<Result<ContestListDto>> GetContestsAsync(TalentCategory? category, int page, int pageSize)
+        public async Task<Result<ContestListDto>> GetContestsAsync(TalentCategory? category, string? search, int page, int pageSize)
         {
             if (category.HasValue && !Enum.IsDefined(category.Value))
                 return new Result<ContestListDto> { IsSuccess = false, Message = "Invalid category.", StatusCode = 400 };
@@ -40,8 +40,8 @@ namespace TalentShowcase.Api.Services.Implementations
             if (pageSize < 1 || pageSize > MaxPageSize)
                 return new Result<ContestListDto> { IsSuccess = false, Message = $"Page size must be between 1 and {MaxPageSize}.", StatusCode = 400 };
 
-            var totalCount = await _contestRepo.CountPublicAsync(category);
-            var contests = (await _contestRepo.GetPublicAsync(category, page, pageSize)).ToList();
+            var totalCount = await _contestRepo.CountPublicAsync(category, search);
+            var contests = (await _contestRepo.GetPublicAsync(category, search, page, pageSize)).ToList();
             var entryCounts = await _entryRepo.CountByContestIdsAsync(contests.Select(c => c.Id));
 
             var result = new ContestListDto

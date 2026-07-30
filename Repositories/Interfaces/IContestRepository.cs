@@ -5,8 +5,8 @@ namespace TalentShowcase.Api.Repositories.Interfaces
 {
     public interface IContestRepository : IGenericRepository<Contest>
     {
-        Task<IEnumerable<Contest>> GetPublicAsync(TalentCategory? category, int page, int pageSize);
-        Task<int> CountPublicAsync(TalentCategory? category);
+        Task<IEnumerable<Contest>> GetPublicAsync(TalentCategory? category, string? search, int page, int pageSize);
+        Task<int> CountPublicAsync(TalentCategory? category, string? search);
         Task<int> CountEndedAsync();
         Task<IEnumerable<Contest>> GetEndedUnprocessedAsync();
     }

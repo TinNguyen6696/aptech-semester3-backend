@@ -6,7 +6,7 @@ namespace TalentShowcase.Api.Services.Interfaces
 {
     public interface IContestService
     {
-        Task<Result<ContestListDto>> GetContestsAsync(TalentCategory? category, int page, int pageSize);
+        Task<Result<ContestListDto>> GetContestsAsync(TalentCategory? category, string? search, int page, int pageSize);
         Task<Result<ContestDto>> GetContestByIdAsync(int id);
         Task<Result<ContestDto>> CreateContestAsync(int userId, CreateContestRequest request);
         Task<Result<ContestDto>> UpdateContestAsync(int contestId, UpdateContestRequest request);

@@ -87,7 +87,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetFollowers(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _followService.GetFollowersAsync(id, page, pageSize);
+            var result = await _followService.GetFollowersAsync(id, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 
@@ -95,7 +95,7 @@ namespace TalentShowcase.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetFollowing(int id, [FromQuery] int page = 1, [FromQuery] int pageSize = DefaultPageSize)
         {
-            var result = await _followService.GetFollowingAsync(id, page, pageSize);
+            var result = await _followService.GetFollowingAsync(id, page, pageSize, CurrentUserIdOrNull);
             return StatusCode(result.StatusCode, result);
         }
 

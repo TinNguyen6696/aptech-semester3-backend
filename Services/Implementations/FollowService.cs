@@ -49,7 +49,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<object> { IsSuccess = true, Message = "Followed.", StatusCode = 200 };
         }
 
-        public async Task<Result<FollowListDto>> GetFollowersAsync(int userId, int page, int pageSize)
+        public async Task<Result<FollowListDto>> GetFollowersAsync(int userId, int page, int pageSize, int? currentUserId)
         {
             var user = await _userRepo.GetPublicByIdAsync(userId);
             if (user == null)
@@ -64,9 +64,13 @@ namespace TalentShowcase.Api.Services.Implementations
             var totalCount = await _followRepo.CountFollowersAsync(userId);
             var follows = await _followRepo.GetFollowersAsync(userId, page, pageSize);
 
+            var followingIds = currentUserId.HasValue
+                ? await _followRepo.GetFollowingIdsAsync(currentUserId.Value, follows.Select(f => f.FollowerId))
+                : null;
+
             var result = new FollowListDto
             {
-                Users = follows.Select(f => ToDto(f.Follower)),
+                Users = follows.Select(f => ToDto(f.Follower, followingIds, currentUserId)),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -76,7 +80,7 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<FollowListDto> { Data = result, IsSuccess = true, Message = "Followers retrieved successfully.", StatusCode = 200 };
         }
 
-        public async Task<Result<FollowListDto>> GetFollowingAsync(int userId, int page, int pageSize)
+        public async Task<Result<FollowListDto>> GetFollowingAsync(int userId, int page, int pageSize, int? currentUserId)
         {
             var user = await _userRepo.GetPublicByIdAsync(userId);
             if (user == null)
@@ -91,9 +95,13 @@ namespace TalentShowcase.Api.Services.Implementations
             var totalCount = await _followRepo.CountFollowingAsync(userId);
             var follows = await _followRepo.GetFollowingAsync(userId, page, pageSize);
 
+            var followingIds = currentUserId.HasValue
+                ? await _followRepo.GetFollowingIdsAsync(currentUserId.Value, follows.Select(f => f.FollowingId))
+                : null;
+
             var result = new FollowListDto
             {
-                Users = follows.Select(f => ToDto(f.Following)),
+                Users = follows.Select(f => ToDto(f.Following, followingIds, currentUserId)),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -103,13 +111,17 @@ namespace TalentShowcase.Api.Services.Implementations
             return new Result<FollowListDto> { Data = result, IsSuccess = true, Message = "Following retrieved successfully.", StatusCode = 200 };
         }
 
-        private static FollowUserDto ToDto(User user) => new FollowUserDto
+        // null = anonymous viewer or viewing myself in the list — same convention as
+        // VideoService/UserService.GetMentorsAsync, so the client's rule stays
+        // "only render the follow button when IsFollowing != null".
+        private static FollowUserDto ToDto(User user, HashSet<int>? followingIds, int? currentUserId) => new FollowUserDto
         {
             Id = user.Id,
             Username = user.Username,
             ProfileImageUrl = user.Profile?.ProfileImageUrl,
             PrimaryCategory = user.Profile?.PrimaryCategory,
-            SkillLevel = user.Profile?.SkillLevel
+            SkillLevel = user.Profile?.SkillLevel,
+            IsFollowing = followingIds == null || user.Id == currentUserId ? null : followingIds.Contains(user.Id)
         };
     }
 }
