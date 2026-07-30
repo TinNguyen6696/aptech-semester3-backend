@@ -119,7 +119,9 @@ namespace TalentShowcase.Api.Services.Implementations
                     ProvinceId = m.Profile.ProvinceId,
                     ProvinceName = m.Profile.Province!.Name,
                     FollowerCount = followerCounts.GetValueOrDefault(m.Id),
-                    IsFollowing = followingIds?.Contains(m.Id)
+                    // null on myself too (I show up here when I'm a Mentor) — same convention as
+                    // the video endpoints: no IsFollowing means no follow button to render.
+                    IsFollowing = followingIds == null || m.Id == currentUserId ? null : followingIds.Contains(m.Id)
                 }),
                 Page = page,
                 PageSize = pageSize,

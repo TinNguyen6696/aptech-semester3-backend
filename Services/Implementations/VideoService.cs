@@ -218,10 +218,11 @@ namespace TalentShowcase.Api.Services.Implementations
             var totalCount = await _videoRepo.CountPublicAsync(category, provinceId, skillLevel);
             var videos = (await _videoRepo.GetPublicAsync(category, provinceId, skillLevel, sortBy, page, pageSize)).ToList();
             var stats = await GetStatsBatchAsync(videos.Select(v => v.Id), currentUserId);
+            var owners = await GetOwnerFollowStateAsync(videos, currentUserId);
 
             var result = new PublicVideoListDto
             {
-                Videos = videos.Select(v => ToPublicDto(v, stats[v.Id])),
+                Videos = videos.Select(v => ToPublicDto(v, stats[v.Id], owners.FollowerCounts.GetValueOrDefault(v.UserId), owners.IsFollowing(v.UserId))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -242,10 +243,11 @@ namespace TalentShowcase.Api.Services.Implementations
             var totalCount = await _videoRepo.CountPublicByUserIdAsync(userId);
             var videos = (await _videoRepo.GetPublicByUserIdAsync(userId, page, pageSize)).ToList();
             var stats = await GetStatsBatchAsync(videos.Select(v => v.Id), currentUserId);
+            var owners = await GetOwnerFollowStateAsync(videos, currentUserId);
 
             var result = new PublicVideoListDto
             {
-                Videos = videos.Select(v => ToPublicDto(v, stats[v.Id])),
+                Videos = videos.Select(v => ToPublicDto(v, stats[v.Id], owners.FollowerCounts.GetValueOrDefault(v.UserId), owners.IsFollowing(v.UserId))),
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
@@ -326,6 +328,23 @@ namespace TalentShowcase.Api.Services.Implementations
                 myScores != null && myScores.TryGetValue(id, out var score) ? score : null));
         }
 
+        // Follower count + follow state for every owner on the page, batched the same way as
+        // GetStatsBatchAsync. Without this a list returns Owner.IsFollowing = null and the
+        // follow button resets to "Follow" on every reload.
+        private async Task<OwnerFollowState> GetOwnerFollowStateAsync(IEnumerable<Video> videos, int? currentUserId)
+        {
+            var ownerIds = videos.Select(v => v.UserId).Distinct().ToList();
+
+            var followerCounts = await _followRepo.CountFollowersBatchAsync(ownerIds);
+
+            // null = anonymous viewer, no follow button either way.
+            var followingIds = currentUserId.HasValue
+                ? await _followRepo.GetFollowingIdsAsync(currentUserId.Value, ownerIds)
+                : null;
+
+            return new OwnerFollowState(followerCounts, followingIds, currentUserId);
+        }
+
         private static VideoDto ToDto(Video video, VideoStats stats) => new VideoDto
         {
             Id = video.Id,
@@ -377,6 +396,14 @@ namespace TalentShowcase.Api.Services.Implementations
         private record VideoStats(int ViewCount, int LikeCount, int CommentCount, double? AverageRating, bool? IsLiked, bool? IsReported, int? MyRating)
         {
             public static readonly VideoStats Empty = new(0, 0, 0, null, null, null, null);
+        }
+
+        private record OwnerFollowState(Dictionary<int, int> FollowerCounts, HashSet<int>? FollowingIds, int? CurrentUserId)
+        {
+            // null on my own video too — same convention as GetPublicVideoByIdAsync, so the
+            // client's single rule stays "show the button only when IsFollowing != null".
+            public bool? IsFollowing(int ownerId) =>
+                FollowingIds == null || ownerId == CurrentUserId ? null : FollowingIds.Contains(ownerId);
         }
     }
 }
