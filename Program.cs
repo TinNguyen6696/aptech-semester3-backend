@@ -102,7 +102,14 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseHttpsRedirection();
+
+// Production only. In Development this turns a request from the Vite dev server into a 307
+// before UseCors can attach its headers, and a CORS preflight is not allowed to be redirected
+// at all — the browser then reports it as a CORS failure. It also behaves differently per
+// launch profile: "http" has no https port to redirect to, so the middleware silently does
+// nothing there, while "https" (Visual Studio's default) does redirect.
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(webRootPath)
