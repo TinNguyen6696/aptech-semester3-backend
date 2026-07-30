@@ -21,11 +21,13 @@ namespace TalentShowcase.Api.Services.Implementations
             _videoRepo = videoRepo;
         }
 
-        public async Task<Result<object>> RecordViewAsync(int? userId, int videoId)
+        public async Task<Result<int>> RecordViewAsync(int? userId, int videoId)
         {
             var video = await _videoRepo.GetByIdAsync(videoId);
             if (video == null)
-                return new Result<object> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
+                return new Result<int> { IsSuccess = false, Message = "Video not found.", StatusCode = 404 };
+
+            var counted = true;
 
             try
             {
@@ -37,9 +39,21 @@ namespace TalentShowcase.Api.Services.Implementations
                 // Same logged-in user viewing again — unique index rejected the duplicate row, ignore.
                 // Any other DbUpdateException (connection failure, unrelated constraint, etc.) is not
                 // caught here and bubbles up to ExceptionHandlingMiddleware as a real 500.
+                counted = false;
             }
 
-            return new Result<object> { IsSuccess = true, Message = "View recorded.", StatusCode = 200 };
+            // Always return the authoritative count, whether or not this call added a row. The client
+            // has no way to predict the dedup outcome, so an optimistic +1 on its side would drift —
+            // it should just render this number.
+            var viewCount = await _viewRepo.CountByVideoIdAsync(videoId);
+
+            return new Result<int>
+            {
+                Data = viewCount,
+                IsSuccess = true,
+                Message = counted ? "View recorded." : "View already counted.",
+                StatusCode = 200
+            };
         }
     }
 }

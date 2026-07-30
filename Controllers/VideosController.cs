@@ -50,7 +50,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("{id}/like")]
-        [Authorize(Roles = "Member,Mentor")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
         public async Task<IActionResult> ToggleLike(int id)
         {
             var result = await _likeService.ToggleVideoLikeAsync(CurrentUserId, id);
@@ -66,7 +66,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("{id}/comments")]
-        [Authorize(Roles = "Member,Mentor")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
         public async Task<IActionResult> AddComment(int id, [FromBody] CreateCommentRequest request)
         {
             var result = await _commentService.AddVideoCommentAsync(CurrentUserId, id, request);
@@ -74,7 +74,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("{id}/rating")]
-        [Authorize(Roles = "Member,Mentor")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
         public async Task<IActionResult> RateVideo(int id, [FromBody] RateVideoRequest request)
         {
             var result = await _ratingService.RateVideoAsync(CurrentUserId, id, request);

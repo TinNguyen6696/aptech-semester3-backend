@@ -34,7 +34,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("{id}/like")]
-        [Authorize(Roles = "Member,Mentor")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
         public async Task<IActionResult> ToggleLike(int id)
         {
             var result = await _likeService.ToggleCommentLikeAsync(CurrentUserId, id);

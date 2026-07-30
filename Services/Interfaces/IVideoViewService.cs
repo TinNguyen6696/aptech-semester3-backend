@@ -4,6 +4,6 @@ namespace TalentShowcase.Api.Services.Interfaces
 {
     public interface IVideoViewService
     {
-        Task<Result<object>> RecordViewAsync(int? userId, int videoId);
+        Task<Result<int>> RecordViewAsync(int? userId, int videoId);
     }
 }

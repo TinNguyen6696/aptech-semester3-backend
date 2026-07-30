@@ -49,7 +49,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("{id}/like")]
-        [Authorize(Roles = "Member,Mentor")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
         public async Task<IActionResult> ToggleLike(int id)
         {
             var result = await _likeService.ToggleCommunityPostLikeAsync(CurrentUserId, id);
@@ -65,7 +65,7 @@ namespace TalentShowcase.Api.Controllers
         }
 
         [HttpPost("{id}/comments")]
-        [Authorize(Roles = "Member,Mentor")]
+        [Authorize(Roles = "Member,Mentor,Recruiter")]
         public async Task<IActionResult> AddComment(int id, [FromBody] CreateCommentRequest request)
         {
             var result = await _commentService.AddCommunityPostCommentAsync(CurrentUserId, id, request);
